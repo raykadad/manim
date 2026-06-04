@@ -82,6 +82,7 @@ class BaseAIThreeDScene(ThreeDScene):
         apply_theme(self.theme)
         set_camera_preset(self, self.camera_preset)
         self._background = deep_space_background(self.theme)
+        self.add_fixed_in_frame_mobjects(self._background)
         self.add(self._background)
         if self.use_floor:
             self._floor = grid_floor(self.theme)
