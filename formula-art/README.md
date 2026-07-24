@@ -14,14 +14,27 @@ Background audio uses **Mixkit royalty-free** tracks (YouTube-safe), not generat
 
 ## How to run
 
-From the repo root:
+Open a terminal inside the `formula-art` folder, then start a local server:
 
+**Windows (PowerShell / CMD):**
+```powershell
+cd formula-art
+py -m http.server 8080
+```
+If `py` is missing, try:
+```powershell
+python -m http.server 8080
+```
+
+**macOS / Linux:**
 ```bash
 cd formula-art
 python3 -m http.server 8080
 ```
 
-Open `http://localhost:8080`, click **Start Fullscreen Show**, then start your screen recorder.
+Then open `http://localhost:8080`, click **Start Fullscreen Show**, and start your screen recorder.
+
+**No Python installed?** You can also double-click `index.html` to open it in the browser. A local server is still preferred so music loads reliably.
 
 ## Recording tips
 
