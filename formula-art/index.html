@@ -1,0 +1,1162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mathematical Formula Art — Cinematic Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <style>
+    :root{
+      color-scheme:dark;
+      --bg:#061018;
+      --panel:rgba(6,16,24,.78);
+      --line:rgba(140,210,230,.16);
+      --text:#f3f8fb;
+      --muted:#93a9b8;
+      --cyan:#3fd8ff;
+      --teal:#2fd6a8;
+      --amber:#ffc857;
+      --rose:#ff7b8a;
+      --sky:#7eb8ff;
+      --shadow:0 24px 70px rgba(0,0,0,.38);
+    }
+
+    *{box-sizing:border-box}
+    html,body{
+      margin:0; width:100%; height:100%; overflow:hidden; background:var(--bg);
+      font-family:Outfit,Segoe UI,sans-serif; color:var(--text);
+    }
+
+    body{
+      background:
+        radial-gradient(circle at 12% 8%, rgba(63,216,255,.12), transparent 30%),
+        radial-gradient(circle at 88% 18%, rgba(255,200,87,.07), transparent 28%),
+        linear-gradient(180deg,#0a1620,#040b11 60%, #061018);
+    }
+
+    #stage{position:fixed; inset:0}
+
+    #fade{
+      position:fixed; inset:0; pointer-events:none; z-index:8;
+      background:radial-gradient(circle at center, rgba(0,0,0,.05), rgba(0,0,0,.55));
+      opacity:0; transition:opacity .8s ease;
+    }
+
+    .hud{
+      position:fixed; inset:18px 18px auto 18px; z-index:9;
+      display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+      pointer-events:none;
+    }
+
+    .glass{
+      border:1px solid var(--line);
+      background:var(--panel);
+      backdrop-filter:blur(16px);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      pointer-events:none;
+    }
+
+    .title-card{
+      max-width:min(760px,58vw);
+      padding:16px 18px;
+      opacity:0; transform:translateY(-10px);
+      transition:opacity .7s ease, transform .7s ease;
+    }
+    .title-card.show{opacity:1; transform:none}
+
+    .phase-chip{
+      display:inline-flex; align-items:center; gap:8px;
+      margin-bottom:8px; padding:5px 10px; border-radius:999px;
+      border:1px solid rgba(63,216,255,.22);
+      background:rgba(63,216,255,.08);
+      color:#c9f4ff; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    }
+    .phase-chip i{
+      width:7px; height:7px; border-radius:50%; background:var(--cyan);
+      box-shadow:0 0 10px rgba(63,216,255,.8);
+      animation:pulse 1.4s ease infinite;
+    }
+    @keyframes pulse{0%,100%{opacity:.45} 50%{opacity:1}}
+
+    .title-card h1{
+      margin:0 0 6px; font-size:clamp(22px,2.3vw,34px); letter-spacing:-.03em; font-weight:800;
+    }
+    .title-card p{
+      margin:0; color:var(--muted); font-size:13px; line-height:1.65;
+    }
+
+    .formula{
+      margin-top:12px;
+      font:700 13px/1.75 "JetBrains Mono",Consolas,monospace;
+      color:#dff7ff;
+      background:linear-gradient(135deg, rgba(63,216,255,.08), rgba(255,200,87,.05));
+      border:1px solid rgba(63,216,255,.16);
+      border-radius:12px;
+      padding:12px 14px;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    .meta-card{
+      width:min(340px,30vw);
+      padding:14px 16px;
+    }
+
+    .meta-top{
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      font-size:12px;
+    }
+    .meta-top strong{
+      font-size:13px; letter-spacing:.05em; text-transform:uppercase;
+    }
+    .timer{
+      font:800 18px/1 "JetBrains Mono",monospace;
+      color:#fff;
+    }
+    .bar{
+      height:8px; margin-top:10px; border-radius:999px; overflow:hidden;
+      background:rgba(255,255,255,.08);
+    }
+    .bar > div{
+      width:0%; height:100%;
+      background:linear-gradient(90deg,var(--teal),var(--cyan),var(--amber));
+      transition:width .12s linear;
+    }
+    .subline{
+      margin-top:8px; color:var(--muted); font-size:11px; line-height:1.6;
+    }
+
+    .footer{
+      position:fixed; left:18px; right:18px; bottom:18px; z-index:9;
+      display:flex; justify-content:space-between; align-items:flex-end; gap:16px;
+      pointer-events:none;
+    }
+    .legend,.credit{
+      padding:12px 14px;
+      font-size:11px; color:var(--muted); line-height:1.8;
+    }
+    .legend-row{display:flex; align-items:center; gap:8px}
+    .legend-row i{width:14px; height:3px; border-radius:3px; display:inline-block}
+    .credit{text-align:right}
+
+    .music-badge{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(47,214,168,.22);
+      background:rgba(47,214,168,.08);
+      color:#d8fff2; font-size:11px;
+    }
+    .music-badge i{
+      width:7px;height:7px;border-radius:50%;background:var(--teal);
+      box-shadow:0 0 12px rgba(47,214,168,.7);
+    }
+
+    /* Big formula intro card in center */
+    #formulaReveal{
+      position:fixed; inset:0; z-index:12;
+      display:grid; place-items:center;
+      pointer-events:none;
+      opacity:0; visibility:hidden;
+      transition:opacity .55s ease, visibility .55s ease;
+      background:radial-gradient(circle at 50% 42%, rgba(8,20,30,.55), rgba(4,10,16,.82));
+    }
+    #formulaReveal.show{opacity:1; visibility:visible}
+
+    .reveal-card{
+      width:min(920px,92vw);
+      text-align:center;
+      padding:28px 30px;
+      border:1px solid rgba(63,216,255,.18);
+      border-radius:28px;
+      background:rgba(8,18,28,.86);
+      box-shadow:0 30px 80px rgba(0,0,0,.45);
+      transform:scale(.94) translateY(18px);
+      transition:transform .7s cubic-bezier(.2,.8,.2,1);
+    }
+    #formulaReveal.show .reveal-card{transform:none}
+
+    .reveal-kicker{
+      display:inline-block; margin-bottom:10px;
+      color:var(--amber); font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    }
+    .reveal-card h2{
+      margin:0 0 10px; font-size:clamp(32px,4.4vw,64px); letter-spacing:-.04em; font-weight:800;
+    }
+    .reveal-card p{
+      margin:0 auto 16px; max-width:720px; color:var(--muted); font-size:15px; line-height:1.8;
+    }
+    .reveal-formula{
+      margin:0 auto; max-width:820px;
+      font:700 15px/1.8 "JetBrains Mono",Consolas,monospace;
+      color:#e8fbff;
+      padding:16px 18px;
+      border-radius:16px;
+      border:1px solid rgba(255,200,87,.22);
+      background:linear-gradient(135deg, rgba(255,200,87,.08), rgba(63,216,255,.06));
+      white-space:pre-wrap;
+    }
+
+    .overlay{
+      position:fixed; inset:0; z-index:20;
+      display:grid; place-items:center;
+      background:
+        radial-gradient(circle at 50% 40%, rgba(63,216,255,.10), transparent 28%),
+        rgba(4,10,16,.9);
+      transition:opacity .45s ease, visibility .45s ease;
+    }
+    .overlay.hidden{opacity:0; visibility:hidden}
+
+    .overlay-card{
+      width:min(900px,92vw);
+      border:1px solid var(--line);
+      border-radius:28px;
+      background:rgba(8,18,28,.9);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(18px);
+      padding:28px;
+      text-align:center;
+    }
+    .overlay-card .hero{
+      margin:0 auto 14px;
+      width:84px; height:84px; border-radius:24px;
+      display:grid; place-items:center;
+      background:linear-gradient(145deg,#1ec8b0, #3fd8ff 55%, #ffc857);
+      font:800 30px/1 Outfit,sans-serif;
+      box-shadow:0 16px 50px rgba(63,216,255,.28);
+    }
+    .overlay-card h2{
+      margin:0 0 8px; font-size:clamp(30px,4vw,56px); letter-spacing:-.04em;
+    }
+    .overlay-card > p{
+      margin:0 auto; max-width:760px;
+      font-size:15px; color:var(--muted); line-height:1.85;
+    }
+    .overlay-grid{
+      display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:22px 0;
+    }
+    .overlay-item{
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:rgba(255,255,255,.03);
+      padding:14px; text-align:left;
+    }
+    .overlay-item strong{display:block; font-size:13px; margin-bottom:4px; color:#fff}
+    .overlay-item span{display:block; font-size:12px; color:var(--muted); line-height:1.7}
+
+    .start-btn{
+      cursor:pointer; border:0; color:#061018; margin-top:8px;
+      padding:16px 24px; border-radius:16px;
+      background:linear-gradient(135deg,var(--teal),var(--cyan) 55%,var(--amber));
+      font:800 16px/1 Outfit,sans-serif;
+      box-shadow:0 16px 42px rgba(63,216,255,.28);
+    }
+    .tiny{margin-top:14px; font-size:11px; color:var(--muted)}
+
+    .loading{
+      position:fixed; inset:0; z-index:19;
+      display:none; place-items:center;
+      background:rgba(4,10,16,.72);
+      backdrop-filter:blur(10px);
+    }
+    .loading.show{display:grid}
+    .loading-card{
+      width:min(460px,90vw); text-align:center;
+      border:1px solid var(--line); border-radius:24px;
+      background:rgba(8,18,28,.92);
+      padding:24px; box-shadow:var(--shadow);
+    }
+    .spinner{
+      width:48px; height:48px; margin:0 auto 14px;
+      border:4px solid rgba(255,255,255,.10);
+      border-top-color:var(--cyan);
+      border-radius:50%; animation:spin .9s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .axis-label{
+      position:fixed; z-index:10;
+      padding:4px 7px; border-radius:8px;
+      font:700 13px/1 Outfit,sans-serif;
+      background:rgba(5,12,18,.74);
+      border:1px solid rgba(255,255,255,.10);
+      pointer-events:none;
+      transform:translate(-50%,-50%);
+    }
+    #labelX{color:#ff90a5}
+    #labelY{color:#7effc5}
+    #labelZ{color:#8ec6ff}
+
+    .end-card{
+      position:fixed; inset:0; z-index:15;
+      display:none; place-items:center;
+      background:rgba(4,10,16,.78);
+      backdrop-filter:blur(8px);
+    }
+    .end-card.show{display:grid}
+    .end-card .glass{
+      pointer-events:auto; text-align:center; padding:28px; max-width:560px; width:92vw;
+    }
+
+    @media (max-width: 1100px){
+      .hud{flex-direction:column}
+      .title-card{max-width:calc(100vw - 36px)}
+      .meta-card{width:min(460px,calc(100vw - 36px))}
+      .overlay-grid{grid-template-columns:1fr}
+    }
+    @media (max-width: 700px){
+      .footer{flex-direction:column; align-items:stretch}
+      .legend,.credit{width:100%}
+      .title-card h1{font-size:24px}
+      .overlay-card{padding:20px}
+    }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <div id="fade"></div>
+
+  <div id="labelX" class="axis-label">X</div>
+  <div id="labelY" class="axis-label">Y</div>
+  <div id="labelZ" class="axis-label">Z</div>
+
+  <div id="formulaReveal">
+    <div class="reveal-card">
+      <div class="reveal-kicker" id="revealKicker">Scene 1 · Formula Reveal</div>
+      <h2 id="revealTitle">Wave Mandala</h2>
+      <p id="revealDescription">A radial wave surface that blooms outward like a mathematical flower.</p>
+      <div class="reveal-formula" id="revealFormula"></div>
+    </div>
+  </div>
+
+  <div class="hud">
+    <div class="glass title-card" id="titleCard">
+      <div class="phase-chip"><i></i><span id="phaseChip">Waiting</span></div>
+      <h1 id="sceneTitle">Formula Art</h1>
+      <p id="sceneDescription">An automated cinematic mathematical visualization.</p>
+      <div id="sceneFormula" class="formula"></div>
+    </div>
+
+    <div class="glass meta-card">
+      <div class="meta-top">
+        <div>
+          <strong id="metaLabel">Preparing</strong><br/>
+          <span id="sceneCount" style="color:var(--muted)">Scene 1 / 5</span>
+        </div>
+        <div id="sceneTimer" class="timer">00:00</div>
+      </div>
+      <div class="bar"><div id="sceneBar"></div></div>
+      <div class="subline" id="sceneSubline">Building geometry and preparing the cinematic sequence…</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="glass legend">
+      <div class="legend-row"><i style="background:#ff7288"></i> X Axis</div>
+      <div class="legend-row"><i style="background:#4ff2be"></i> Y Axis</div>
+      <div class="legend-row"><i style="background:#72b7ff"></i> Z Axis</div>
+      <div style="margin-top:4px">1) Formula appear → 2) Surface build → 3) Multi-angle camera</div>
+    </div>
+    <div class="glass credit">
+      <div class="music-badge"><i></i><span id="musicLabel">Mixkit royalty-free soundtrack</span></div>
+      <div style="margin-top:8px">Designed for screen recording and YouTube uploads</div>
+    </div>
+  </div>
+
+  <div id="overlay" class="overlay">
+    <div class="overlay-card">
+      <div class="hero">π</div>
+      <h2>Mathematical Formula Art</h2>
+      <p>
+        Fully automatic cinematic show: each formula appears first, then the 3D surface is built live,
+        then the camera tours the finished shape from multiple angles — ready for YouTube screen recording.
+      </p>
+      <div class="overlay-grid">
+        <div class="overlay-item">
+          <strong>1. Formula reveal</strong>
+          <span>The equation and title appear on screen before any geometry is drawn.</span>
+        </div>
+        <div class="overlay-item">
+          <strong>2. Live construction</strong>
+          <span>The surface grows cell by cell with a glowing brush tip.</span>
+        </div>
+        <div class="overlay-item">
+          <strong>3. Camera showcase</strong>
+          <span>Wide, low, overhead, and close passes show the finished form.</span>
+        </div>
+      </div>
+      <button id="startBtn" class="start-btn">Start Fullscreen Show</button>
+      <div class="tiny">
+        Tip: one click starts fullscreen + Mixkit royalty-free music (YouTube-safe). Music loops automatically.
+      </div>
+    </div>
+  </div>
+
+  <div id="loading" class="loading">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <h3 style="margin:0 0 8px">Preparing the Formula Gallery</h3>
+      <div id="loadingText" style="font-size:13px;color:var(--muted);line-height:1.8">
+        Computing meshes and sorting reveal order…
+      </div>
+    </div>
+  </div>
+
+  <div id="endCard" class="end-card">
+    <div class="glass">
+      <h2 style="margin:0 0 8px">Showcase Complete</h2>
+      <p style="margin:0;color:var(--muted);line-height:1.7">
+        All five formulas finished. Replay for another take, or stop the screen recording.
+      </p>
+      <button id="replayBtn" class="start-btn" style="margin-top:18px">Replay Show</button>
+    </div>
+  </div>
+
+  <audio id="bgMusic" loop preload="auto">
+    <source src="assets/music/vastness.mp3" type="audio/mpeg" />
+    <source src="assets/music/valley-sunset.mp3" type="audio/mpeg" />
+  </audio>
+
+  <script>
+  (function(){
+    'use strict';
+
+    const $ = (id) => document.getElementById(id);
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    const easeInOut = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
+    const lerp = (a,b,t) => a + (b-a)*t;
+    const smoothstep = (t) => t*t*(3-2*t);
+
+    const state = {
+      renderer: null,
+      scene: null,
+      camera: null,
+      sequenceGroup: null,
+      axesGroup: null,
+      gridGroup: null,
+      starGroup: null,
+      activeMesh: null,
+      activeWire: null,
+      brush: null,
+      brushLight: null,
+      scenes: [],
+      currentSceneIndex: 0,
+      sceneStartTime: 0,
+      running: false,
+      phase: 'idle'
+    };
+
+    // Each scene: formula intro → build → multi-angle showcase → fade
+    const sceneConfigs = [
+      {
+        id: 'wave-mandala',
+        title: 'Wave Mandala',
+        description: 'A radial wave surface that blooms outward like a mathematical flower.',
+        formula: 'z = 1.55 e^{-0.07(x²+y²)} [cos(4.2r) + 0.32 sin(6θ)]',
+        duration: 48,
+        kind: 'explicit',
+        domain: { aMin:-5.8, aMax:5.8, bMin:-5.8, bMax:5.8, aSteps:96, bSteps:96 },
+        fn: (x,y) => {
+          const r = Math.hypot(x,y);
+          const th = Math.atan2(y,x);
+          return 1.55 * Math.exp(-0.07*(x*x+y*y)) * (Math.cos(4.2*r) + 0.32*Math.sin(6*th));
+        },
+        color: (x,y,z) => colorHSL(0.52 + 0.10*Math.sin(Math.hypot(x,y)*0.85 + z), 0.78, 0.48 + 0.17*Math.tanh(z))
+      },
+      {
+        id: 'enneper-silk',
+        title: 'Enneper Silk',
+        description: 'A classical minimal surface that unfolds like a sheet of mathematical silk.',
+        formula: 'x = u − u³/3 + uv²\ny = v − v³/3 + vu²\nz = u² − v²',
+        duration: 50,
+        kind: 'parametric',
+        domain: { aMin:-2.2, aMax:2.2, bMin:-2.2, bMax:2.2, aSteps:94, bSteps:94 },
+        fn: (u,v) => ({
+          x: u - (u*u*u)/3 + u*v*v,
+          y: v - (v*v*v)/3 + v*u*u,
+          z: u*u - v*v
+        }),
+        color: (x,y,z,u,v) => colorHSL(0.55 + 0.10*Math.sin(1.6*u - v), 0.72, 0.48 + 0.16*Math.tanh(z*0.35))
+      },
+      {
+        id: 'dini-spiral',
+        title: "Dini's Spiral",
+        description: 'A spiraling logarithmic surface with a sculptural, architectural feel.',
+        formula: 'x = cos(u) sin(v)\ny = sin(u) sin(v)\nz = cos(v) + ln(tan(v/2)) + 0.18u',
+        duration: 52,
+        kind: 'parametric',
+        domain: { aMin:0, aMax:Math.PI*4, bMin:0.2, bMax:1.34, aSteps:130, bSteps:66 },
+        fn: (u,v) => ({
+          x: Math.cos(u)*Math.sin(v),
+          y: Math.sin(u)*Math.sin(v),
+          z: Math.cos(v) + Math.log(Math.tan(v/2)) + 0.18*u
+        }),
+        color: (x,y,z,u,v) => colorHSL(0.08 + 0.18*(u/(Math.PI*4)), 0.82, 0.47 + 0.14*Math.sin(v*2))
+      },
+      {
+        id: 'mobius-flower',
+        title: 'Möbius Flower',
+        description: 'A ribbon-like Möbius-style bloom that feels halfway between geometry and sculpture.',
+        formula: 'x = (2 + 0.8v cos(3u/2)) cos(u)\ny = (2 + 0.8v cos(3u/2)) sin(u)\nz = 0.8v sin(3u/2)',
+        duration: 50,
+        kind: 'parametric',
+        domain: { aMin:0, aMax:Math.PI*2, bMin:-1, bMax:1, aSteps:140, bSteps:54 },
+        fn: (u,v) => ({
+          x: (2 + 0.8*v*Math.cos(1.5*u))*Math.cos(u),
+          y: (2 + 0.8*v*Math.cos(1.5*u))*Math.sin(u),
+          z: 0.8*v*Math.sin(1.5*u)
+        }),
+        color: (x,y,z,u,v) => colorHSL(0.02 + 0.12*(u/(Math.PI*2)), 0.78, 0.46 + 0.20*(v+1)/2)
+      },
+      {
+        id: 'ripple-bowl',
+        title: 'Ripple Bowl',
+        description: 'A bowl-like wave sculpture with layered oscillations and calm symmetry.',
+        formula: 'z = 0.32(x²+y²) + 1.2 sin(2.2x) cos(2.2y) e^{-0.08(x²+y²)}',
+        duration: 48,
+        kind: 'explicit',
+        domain: { aMin:-4.8, aMax:4.8, bMin:-4.8, bMax:4.8, aSteps:92, bSteps:92 },
+        fn: (x,y) => 0.32*(x*x+y*y)/4 + 1.2*Math.sin(2.2*x)*Math.cos(2.2*y)*Math.exp(-0.08*(x*x+y*y)),
+        color: (x,y,z) => colorHSL(0.58 + 0.08*Math.cos(x*0.6 - y*0.6), 0.76, 0.46 + 0.12*Math.tanh(z*0.35))
+      }
+    ];
+
+    // Timeline fractions within each scene
+    const PHASE = {
+      introEnd: 0.14,      // formula appears
+      buildEnd: 0.48,      // surface constructs
+      showcaseEnd: 0.90,   // multi-angle camera
+      // rest = fade/transition
+    };
+
+    function colorHSL(h,s,l){
+      const c = new THREE.Color();
+      c.setHSL(((h%1)+1)%1, clamp(s,0,1), clamp(l,0,1));
+      return c;
+    }
+
+    function setLoading(show, text=''){
+      $('loading').classList.toggle('show', show);
+      if(text) $('loadingText').textContent = text;
+    }
+
+    function formatTime(sec){
+      const total = Math.max(0, Math.ceil(sec));
+      const m = String(Math.floor(total/60)).padStart(2,'0');
+      const s = String(total%60).padStart(2,'0');
+      return `${m}:${s}`;
+    }
+
+    function initThree(){
+      state.renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, preserveDrawingBuffer:true });
+      state.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      state.renderer.setSize(window.innerWidth, window.innerHeight);
+      state.renderer.outputEncoding = THREE.sRGBEncoding;
+      $('stage').appendChild(state.renderer.domElement);
+
+      state.scene = new THREE.Scene();
+      state.scene.background = new THREE.Color(0x061018);
+      state.scene.fog = new THREE.FogExp2(0x061018, 0.014);
+
+      state.camera = new THREE.PerspectiveCamera(46, window.innerWidth/window.innerHeight, 0.1, 280);
+      state.camera.position.set(14, 11, 14);
+
+      state.sequenceGroup = new THREE.Group();
+      state.scene.add(state.sequenceGroup);
+
+      state.scene.add(new THREE.AmbientLight(0xffffff, 0.82));
+
+      const key = new THREE.DirectionalLight(0xd7ecff, 1.15);
+      key.position.set(8, 14, 10);
+      state.scene.add(key);
+
+      const fill = new THREE.DirectionalLight(0x55e0c8, 0.7);
+      fill.position.set(-10, 4, -8);
+      state.scene.add(fill);
+
+      const rim = new THREE.DirectionalLight(0xffc857, 0.35);
+      rim.position.set(0, 6, -12);
+      state.scene.add(rim);
+
+      createCoordinateSystem();
+      createStars();
+      createBrush();
+
+      window.addEventListener('resize', onResize);
+    }
+
+    function createBrush(){
+      const g = new THREE.SphereGeometry(0.16, 22, 22);
+      const m = new THREE.MeshBasicMaterial({ color: 0xffe6a8 });
+      state.brush = new THREE.Mesh(g, m);
+      state.brush.visible = false;
+      state.sequenceGroup.add(state.brush);
+
+      state.brushLight = new THREE.PointLight(0x6ee9ff, 1.9, 5);
+      state.brushLight.visible = false;
+      state.sequenceGroup.add(state.brushLight);
+    }
+
+    function createStars(){
+      state.starGroup = new THREE.Group();
+      const count = 1200;
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+
+      for(let i=0;i<count;i++){
+        const radius = 40 + Math.random()*90;
+        const theta = Math.random()*Math.PI*2;
+        const phi = Math.acos(2*Math.random()-1);
+        const x = radius * Math.sin(phi)*Math.cos(theta);
+        const y = radius * Math.cos(phi);
+        const z = radius * Math.sin(phi)*Math.sin(theta);
+
+        const idx = i*3;
+        positions[idx] = x;
+        positions[idx+1] = y;
+        positions[idx+2] = z;
+
+        const c = colorHSL(0.50 + Math.random()*0.14, 0.40, 0.72 + Math.random()*0.16);
+        colors[idx] = c.r;
+        colors[idx+1] = c.g;
+        colors[idx+2] = c.b;
+      }
+
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+      const mat = new THREE.PointsMaterial({
+        size: 0.28,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.88,
+        depthWrite: false
+      });
+
+      state.starGroup.add(new THREE.Points(geom, mat));
+      state.scene.add(state.starGroup);
+    }
+
+    function createCoordinateSystem(){
+      state.axesGroup = new THREE.Group();
+      state.gridGroup = new THREE.Group();
+      state.sequenceGroup.add(state.gridGroup);
+      state.sequenceGroup.add(state.axesGroup);
+
+      const range = 6;
+      const minorMat = new THREE.LineBasicMaterial({ color: 0x1d3a4d, transparent:true, opacity:0.30 });
+      const majorMat = new THREE.LineBasicMaterial({ color: 0x2f5d74, transparent:true, opacity:0.55 });
+
+      for(let i=-range;i<=range;i++){
+        if(i===0) continue;
+        const mat = i % 2 === 0 ? majorMat : minorMat;
+
+        const gx = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-range, 0, i),
+          new THREE.Vector3( range, 0, i)
+        ]);
+        const gz = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(i, 0, -range),
+          new THREE.Vector3(i, 0,  range)
+        ]);
+
+        state.gridGroup.add(new THREE.Line(gx, mat));
+        state.gridGroup.add(new THREE.Line(gz, mat));
+      }
+
+      addAxis(new THREE.Vector3(1,0,0), 0xff7288);
+      addAxis(new THREE.Vector3(0,0,1), 0x4ff2be);
+      addAxis(new THREE.Vector3(0,1,0), 0x72b7ff);
+
+      const origin = new THREE.Mesh(
+        new THREE.SphereGeometry(0.10, 18, 18),
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
+      );
+      state.axesGroup.add(origin);
+    }
+
+    function addAxis(dir, color){
+      const axis = new THREE.ArrowHelper(dir, new THREE.Vector3(0,0,0), 6.6, color, 0.35, 0.18);
+      state.axesGroup.add(axis);
+    }
+
+    function revealKey(mode, x, y, z, i, j, aSteps, bSteps){
+      switch(mode){
+        case 'scan':
+          return j * aSteps + i;
+        case 'height':
+          return y * 1000 + Math.hypot(x, z);
+        case 'radial':
+          return Math.hypot(x, z, y*0.35);
+        case 'spiral':
+        default:
+          return Math.hypot(x,z)*1.35 + Math.atan2(z,x) + (j / bSteps) * 0.45;
+      }
+    }
+
+    async function buildSceneGeometry(config, revealMode='spiral'){
+      const { aMin, aMax, bMin, bMax, aSteps, bSteps } = config.domain;
+      const raw = [];
+      let min = new THREE.Vector3(Infinity,Infinity,Infinity);
+      let max = new THREE.Vector3(-Infinity,-Infinity,-Infinity);
+
+      for(let j=0;j<bSteps;j++){
+        const b = bMin + (bMax-bMin) * (j / (bSteps-1));
+        for(let i=0;i<aSteps;i++){
+          const a = aMin + (aMax-aMin) * (i / (aSteps-1));
+
+          let x,y,z;
+          if(config.kind === 'explicit'){
+            x = a;
+            y = b;
+            z = config.fn(a,b);
+          }else{
+            const p = config.fn(a,b);
+            x = p.x; y = p.y; z = p.z;
+          }
+
+          if(!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)){
+            x = y = z = 0;
+          }
+
+          raw.push({ x,y,z,a,b,i,j });
+          min.min(new THREE.Vector3(x,y,z));
+          max.max(new THREE.Vector3(x,y,z));
+        }
+
+        if(j % 10 === 0){
+          $('loadingText').textContent = `Computing ${config.title}… ${Math.round((j+1)/bSteps*100)}%`;
+          await new Promise(r => requestAnimationFrame(r));
+        }
+      }
+
+      const center = min.clone().add(max).multiplyScalar(0.5);
+      const size = max.clone().sub(min);
+      const scale = 10.6 / Math.max(size.x, size.y, size.z, 1e-6);
+
+      const vertices = [];
+      const colors = [];
+      raw.forEach(p => {
+        p.wx = (p.x - center.x) * scale;
+        p.wy = (p.z - center.z) * scale;
+        p.wz = (p.y - center.y) * scale;
+
+        vertices.push(p.wx, p.wy, p.wz);
+
+        const c = config.kind === 'explicit'
+          ? config.color(p.x, p.y, p.z)
+          : config.color(p.x, p.y, p.z, p.a, p.b);
+
+        colors.push(c.r, c.g, c.b);
+      });
+
+      const cells = [];
+      for(let j=0;j<bSteps-1;j++){
+        for(let i=0;i<aSteps-1;i++){
+          const a = j*aSteps + i;
+          const b = a + 1;
+          const c = a + aSteps;
+          const d = c + 1;
+
+          const p0 = raw[a], p1 = raw[b], p2 = raw[c], p3 = raw[d];
+
+          const cx = (p0.wx + p1.wx + p2.wx + p3.wx) / 4;
+          const cy = (p0.wy + p1.wy + p2.wy + p3.wy) / 4;
+          const cz = (p0.wz + p1.wz + p2.wz + p3.wz) / 4;
+
+          cells.push({
+            a,b,c,d,cx,cy,cz,
+            key: revealKey(revealMode, cx, cy, cz, i, j, aSteps, bSteps)
+          });
+        }
+      }
+
+      cells.sort((m,n) => m.key - n.key);
+
+      const indices = [];
+      const centers = [];
+      cells.forEach(cell => {
+        indices.push(cell.a, cell.c, cell.b, cell.b, cell.c, cell.d);
+        centers.push(new THREE.Vector3(cell.cx, cell.cy, cell.cz));
+      });
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+      geometry.computeBoundingSphere();
+
+      return {
+        geometry,
+        centers,
+        totalIndices: indices.length,
+        totalCells: cells.length
+      };
+    }
+
+    async function prepareAllScenes(){
+      setLoading(true, 'Computing meshes and sorting reveal order…');
+      const revealModes = ['radial','spiral','height','spiral','scan'];
+      state.scenes = [];
+
+      for(let i=0;i<sceneConfigs.length;i++){
+        const config = sceneConfigs[i];
+        $('loadingText').textContent = `Preparing scene ${i+1} of ${sceneConfigs.length}: ${config.title}`;
+        const built = await buildSceneGeometry(config, revealModes[i] || 'spiral');
+        state.scenes.push({
+          config,
+          revealMode: revealModes[i] || 'spiral',
+          built
+        });
+      }
+
+      setLoading(false);
+    }
+
+    function activateScene(index){
+      const sceneData = state.scenes[index];
+      if(!sceneData) return;
+
+      if(state.activeMesh){
+        state.sequenceGroup.remove(state.activeMesh);
+        state.sequenceGroup.remove(state.activeWire);
+        state.activeMesh.geometry.dispose();
+        state.activeMesh.material.dispose();
+        state.activeWire.geometry.dispose();
+        state.activeWire.material.dispose();
+      }
+
+      const material = new THREE.MeshStandardMaterial({
+        vertexColors: true,
+        side: THREE.DoubleSide,
+        roughness: 0.52,
+        metalness: 0.10,
+        transparent: true,
+        opacity: 0.98
+      });
+
+      state.activeMesh = new THREE.Mesh(sceneData.built.geometry, material);
+      state.activeMesh.geometry.setDrawRange(0, 0);
+
+      const wireMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.12,
+        depthWrite: false
+      });
+
+      state.activeWire = new THREE.Mesh(sceneData.built.geometry.clone(), wireMaterial);
+      state.activeWire.geometry.setDrawRange(0, 0);
+
+      state.sequenceGroup.add(state.activeMesh);
+      state.sequenceGroup.add(state.activeWire);
+
+      $('sceneTitle').textContent = sceneData.config.title;
+      $('sceneDescription').textContent = sceneData.config.description;
+      $('sceneFormula').textContent = sceneData.config.formula;
+      $('sceneCount').textContent = `Scene ${index+1} / ${state.scenes.length}`;
+      $('fade').style.opacity = '0';
+
+      $('revealKicker').textContent = `Scene ${index+1} · Formula Reveal`;
+      $('revealTitle').textContent = sceneData.config.title;
+      $('revealDescription').textContent = sceneData.config.description;
+      $('revealFormula').textContent = sceneData.config.formula;
+
+      $('titleCard').classList.remove('show');
+      $('formulaReveal').classList.add('show');
+      state.phase = 'intro';
+    }
+
+    function startSequence(){
+      state.currentSceneIndex = 0;
+      state.sceneStartTime = performance.now();
+      state.running = true;
+      $('endCard').classList.remove('show');
+      activateScene(0);
+      $('metaLabel').textContent = 'Now Playing';
+      $('sceneSubline').textContent = 'Formula reveal…';
+    }
+
+    function switchToNextScene(now){
+      state.currentSceneIndex++;
+      if(state.currentSceneIndex >= state.scenes.length){
+        state.running = false;
+        state.phase = 'complete';
+        $('metaLabel').textContent = 'Complete';
+        $('phaseChip').textContent = 'Complete';
+        $('sceneSubline').textContent = 'The full mathematical showcase has finished.';
+        $('sceneTimer').textContent = formatTime(0);
+        $('sceneBar').style.width = '100%';
+        state.brush.visible = false;
+        state.brushLight.visible = false;
+        $('fade').style.opacity = '0';
+        $('formulaReveal').classList.remove('show');
+        $('titleCard').classList.add('show');
+        $('endCard').classList.add('show');
+        return;
+      }
+      state.sceneStartTime = now;
+      activateScene(state.currentSceneIndex);
+    }
+
+    // Camera keyframes for showcase: [radius, height, angleOffset, lookY, fov]
+    const SHOWCASE_SHOTS = [
+      { r: 15.5, h: 9.5,  a: 0.00, ly: 0.5,  fov: 46 }, // wide establish
+      { r: 12.0, h: 3.2,  a: 0.85, ly: 1.2,  fov: 42 }, // low dramatic
+      { r: 11.0, h: 14.5, a: 1.70, ly: 0.0,  fov: 50 }, // overhead
+      { r: 8.2,  h: 6.0,  a: 2.55, ly: 0.8,  fov: 38 }, // close detail
+      { r: 14.0, h: 8.0,  a: 3.60, ly: 0.55, fov: 44 }  // beauty orbit finish
+    ];
+
+    function sampleShowcaseCamera(t, sceneIndex){
+      // t in [0,1] across showcase phase
+      const n = SHOWCASE_SHOTS.length - 1;
+      const scaled = t * n;
+      const i = Math.min(n - 1, Math.floor(scaled));
+      const local = smoothstep(scaled - i);
+      const A = SHOWCASE_SHOTS[i];
+      const B = SHOWCASE_SHOTS[i + 1];
+      const base = sceneIndex * 0.95;
+      return {
+        r: lerp(A.r, B.r, local),
+        h: lerp(A.h, B.h, local),
+        a: base + lerp(A.a, B.a, local),
+        ly: lerp(A.ly, B.ly, local),
+        fov: lerp(A.fov, B.fov, local)
+      };
+    }
+
+    function setCameraPolar(r, h, angle, lookY, fov){
+      state.camera.position.set(
+        Math.cos(angle) * r,
+        h,
+        Math.sin(angle) * r
+      );
+      state.camera.lookAt(0, lookY, 0);
+      if(typeof fov === 'number' && Math.abs(state.camera.fov - fov) > 0.05){
+        state.camera.fov = fov;
+        state.camera.updateProjectionMatrix();
+      }
+    }
+
+    function updateScene(now){
+      if(!state.running) return;
+      const sceneData = state.scenes[state.currentSceneIndex];
+      if(!sceneData) return;
+
+      const elapsed = (now - state.sceneStartTime) / 1000;
+      const total = sceneData.config.duration;
+      const totalP = clamp(elapsed / total, 0, 1);
+
+      const introEnd = total * PHASE.introEnd;
+      const buildEnd = total * PHASE.buildEnd;
+      const showcaseEnd = total * PHASE.showcaseEnd;
+
+      let phase = 'intro';
+      if(elapsed >= showcaseEnd) phase = 'fade';
+      else if(elapsed >= buildEnd) phase = 'showcase';
+      else if(elapsed >= introEnd) phase = 'build';
+      state.phase = phase;
+
+      // --- Geometry visibility ---
+      let buildP = 0;
+      if(phase === 'build'){
+        buildP = clamp((elapsed - introEnd) / (buildEnd - introEnd), 0, 1);
+      } else if(phase === 'showcase' || phase === 'fade'){
+        buildP = 1;
+      }
+
+      const visibleCells = buildP <= 0
+        ? 0
+        : Math.max(1, Math.floor(sceneData.built.totalCells * easeInOut(buildP)));
+      const visibleIndices = Math.min(sceneData.built.totalIndices, visibleCells * 6);
+
+      state.activeMesh.geometry.setDrawRange(0, visibleIndices);
+      state.activeWire.geometry.setDrawRange(0, visibleIndices);
+
+      // Brush during build
+      if(phase === 'build' && visibleCells > 0){
+        const brushIdx = Math.min(sceneData.built.centers.length - 1, visibleCells - 1);
+        const pos = sceneData.built.centers[brushIdx];
+        state.brush.position.copy(pos);
+        state.brushLight.position.copy(pos);
+        state.brush.visible = true;
+        state.brushLight.visible = true;
+      } else {
+        state.brush.visible = false;
+        state.brushLight.visible = false;
+      }
+
+      // Fade opacity
+      let fadeP = 0;
+      if(phase === 'fade'){
+        fadeP = clamp((elapsed - showcaseEnd) / (total - showcaseEnd), 0, 1);
+      }
+      const alpha = 1 - fadeP * 0.88;
+      state.activeMesh.material.opacity = alpha;
+      state.activeWire.material.opacity = 0.12 * alpha;
+      $('fade').style.opacity = String(fadeP * 0.7);
+
+      // --- UI phase handling ---
+      if(phase === 'intro'){
+        $('formulaReveal').classList.add('show');
+        $('titleCard').classList.remove('show');
+        $('phaseChip').textContent = 'Formula Appear';
+        $('sceneSubline').textContent = 'Presenting the formula before construction…';
+        $('metaLabel').textContent = 'Formula Reveal';
+
+        // Soft pull-in camera during intro (empty grid)
+        const introT = clamp(elapsed / introEnd, 0, 1);
+        const angle = state.currentSceneIndex * 0.95 + introT * 0.35;
+        setCameraPolar(16.5 - introT * 1.2, 10.5, angle, 0.4, 48);
+      } else {
+        // Keep center reveal for a short beat into build, then HUD takes over
+        const buildLocal = phase === 'build'
+          ? clamp((elapsed - introEnd) / (buildEnd - introEnd), 0, 1)
+          : 1;
+
+        if(phase === 'build' && buildLocal < 0.12){
+          $('formulaReveal').classList.add('show');
+          $('titleCard').classList.remove('show');
+        } else {
+          $('formulaReveal').classList.remove('show');
+          $('titleCard').classList.add('show');
+        }
+
+        if(phase === 'build'){
+          $('phaseChip').textContent = 'Building Surface';
+          $('metaLabel').textContent = 'Construction';
+          $('sceneSubline').textContent = `Building the surface… ${Math.floor(buildP * 100)}%`;
+
+          const angle = state.currentSceneIndex * 0.95 + buildP * Math.PI * 0.85;
+          const radius = 14.2 - buildP * 1.4;
+          const height = 9.2 + Math.sin(buildP * Math.PI) * 1.4;
+          setCameraPolar(radius, height, angle, 0.55, 46);
+        } else if(phase === 'showcase'){
+          $('phaseChip').textContent = 'Camera Showcase';
+          $('metaLabel').textContent = 'Multi-Angle Tour';
+          const showT = clamp((elapsed - buildEnd) / (showcaseEnd - buildEnd), 0, 1);
+          const shotNames = ['Wide orbit', 'Low angle', 'Overhead pass', 'Close detail', 'Final beauty'];
+          const shotIdx = Math.min(shotNames.length - 1, Math.floor(showT * (shotNames.length - 0.001)));
+          $('sceneSubline').textContent = `Camera: ${shotNames[shotIdx]} · exploring the finished form`;
+
+          const cam = sampleShowcaseCamera(showT, state.currentSceneIndex);
+          // Extra continuous orbit drift so it never feels static between shots
+          cam.a += showT * 0.55;
+          setCameraPolar(cam.r, cam.h, cam.a, cam.ly, cam.fov);
+        } else {
+          $('phaseChip').textContent = 'Transition';
+          $('metaLabel').textContent = 'Next Formula';
+          $('sceneSubline').textContent = 'Transitioning to the next formula…';
+
+          const angle = state.currentSceneIndex * 0.95 + 3.6 + fadeP * 0.4;
+          setCameraPolar(14.5 + fadeP * 1.5, 8.5, angle, 0.5, 46);
+        }
+      }
+
+      $('sceneTimer').textContent = formatTime(total - elapsed);
+      $('sceneBar').style.width = `${(totalP * 100).toFixed(2)}%`;
+
+      if(elapsed >= total){
+        switchToNextScene(now);
+      }
+    }
+
+    function updateAxisLabels(){
+      placeAxisLabel('labelX', new THREE.Vector3(6.9, 0, 0));
+      placeAxisLabel('labelY', new THREE.Vector3(0, 0, 6.9));
+      placeAxisLabel('labelZ', new THREE.Vector3(0, 6.9, 0));
+    }
+
+    function placeAxisLabel(id, worldPosition){
+      const projected = worldPosition.clone().project(state.camera);
+      const x = (projected.x * 0.5 + 0.5) * window.innerWidth;
+      const y = (-projected.y * 0.5 + 0.5) * window.innerHeight;
+      const el = $(id);
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      el.style.display = (projected.z < -1 || projected.z > 1) ? 'none' : 'block';
+    }
+
+    function onResize(){
+      state.camera.aspect = window.innerWidth / window.innerHeight;
+      state.camera.updateProjectionMatrix();
+      state.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate(now){
+      requestAnimationFrame(animate);
+
+      if(state.starGroup){
+        state.starGroup.rotation.y += 0.00018;
+      }
+
+      updateScene(now);
+      updateAxisLabels();
+      state.renderer.render(state.scene, state.camera);
+    }
+
+    async function startMusic(){
+      const audio = $('bgMusic');
+      audio.volume = 0.42;
+      try{
+        await audio.play();
+        $('musicLabel').textContent = 'Playing: Mixkit “Vastness” (royalty-free)';
+      }catch(err){
+        console.warn('Audio play blocked', err);
+        $('musicLabel').textContent = 'Click again if music is muted by the browser';
+      }
+    }
+
+    async function beginShow(){
+      try{
+        $('overlay').classList.add('hidden');
+        $('endCard').classList.remove('show');
+
+        if(document.documentElement.requestFullscreen){
+          try{ await document.documentElement.requestFullscreen(); } catch(e){}
+        }
+
+        await startMusic();
+        await prepareAllScenes();
+        startSequence();
+      }catch(err){
+        console.error(err);
+        $('loadingText').textContent = 'An error occurred while starting the show. Please refresh and try again.';
+        setLoading(true);
+      }
+    }
+
+    function boot(){
+      initThree();
+      $('startBtn').addEventListener('click', beginShow);
+      $('replayBtn').addEventListener('click', async () => {
+        $('endCard').classList.remove('show');
+        await startMusic();
+        startSequence();
+      });
+      animate(0);
+
+      const totalDuration = sceneConfigs.reduce((acc,s) => acc + s.duration, 0);
+      $('sceneTitle').textContent = 'Mathematical Formula Art';
+      $('sceneDescription').textContent = 'Formula → Build → Multi-angle camera. Ready for YouTube recording.';
+      $('sceneFormula').textContent = 'Click “Start Fullscreen Show” to begin.';
+      $('sceneTimer').textContent = formatTime(totalDuration);
+      $('sceneBar').style.width = '0%';
+      $('sceneSubline').textContent = 'Waiting for your click to start fullscreen and music…';
+      $('sceneCount').textContent = `Scene 1 / ${sceneConfigs.length}`;
+      $('titleCard').classList.add('show');
+      $('phaseChip').textContent = 'Ready';
+    }
+
+    window.addEventListener('load', boot);
+  })();
+  </script>
+</body>
+</html>
