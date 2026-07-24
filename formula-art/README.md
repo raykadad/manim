@@ -4,13 +4,15 @@ A fullscreen Three.js presentation designed for **YouTube screen recording**.
 
 ## What changed vs the old version
 
-Each scene now has three clear beats (much better for viewers):
+Each scene now has clearer cinematic beats:
 
-1. **Formula appear** — title + equation on a large centered card
+1. **Formula appear** — dramatic KaTeX card (large readable math)
 2. **Surface build** — geometry draws live with a glowing brush
-3. **Camera showcase** — wide → low → overhead → close → beauty orbit
+3. **Hold** — finished form pauses briefly
+4. **Camera tour** — wide → low → overhead → close
+5. **Finale** — full orbit, then under-pass, then rise to present the shape
 
-Background audio uses **Mixkit royalty-free** tracks (YouTube-safe), not generative synths.
+Background audio uses **Mixkit royalty-free** tracks (`Rest Now`, `Opalescent`, `Echoes`).
 
 ## How to run
 
