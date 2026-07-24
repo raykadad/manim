@@ -838,7 +838,7 @@
       animate(0);
       const totalDuration=sceneConfigs.reduce((acc,s)=>acc+s.duration,0);
       $('sceneTitle').textContent='Mathematical Formula Art';
-      $('sceneDescription').textContent='Formula → Build → Tour → Finale orbit & under-pass.';
+      $('sceneDescription').textContent='Live formula beside the build → Tour → Finale orbit & under-pass.';
       renderLatex($('sceneFormula'), String.raw`\text{Click “Start Fullscreen Show” to begin.}`);
       $('sceneTimer').textContent=formatTime(totalDuration); $('sceneBar').style.width='0%';
       $('sceneSubline').textContent='Waiting for your click to start fullscreen and music…';
