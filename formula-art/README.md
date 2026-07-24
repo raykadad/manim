@@ -6,11 +6,10 @@ A fullscreen Three.js presentation designed for **YouTube screen recording**.
 
 Each scene now has clearer cinematic beats:
 
-1. **Formula appear** — dramatic KaTeX card (large readable math)
-2. **Surface build** — geometry draws live with a glowing brush
-3. **Hold** — finished form pauses briefly
-4. **Camera tour** — wide → low → overhead → close
-5. **Finale** — full orbit, then under-pass, then rise to present the shape
+1. **Live build + formula** — shape grows while the equation appears piece-by-piece beside it (~40s)
+2. **Hold** — finished form pauses briefly
+3. **Camera tour** — wide → low → overhead → close
+4. **Finale** — full orbit, then under-pass, then rise to present the shape
 
 Background audio uses **Mixkit royalty-free** tracks (`Rest Now`, `Opalescent`, `Echoes`).
 
