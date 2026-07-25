@@ -269,8 +269,8 @@ export function buildWatch(spec: WatchSpec) {
     new THREE.MeshPhysicalMaterial({
       color: metal.color,
       metalness: 1,
-      roughness: 0.16,
-      envMapIntensity: 1.35,
+      roughness: 0.22,
+      envMapIntensity: 1.55,
     }),
   )
   add(mergeAll(indexGeos), indexMat)
