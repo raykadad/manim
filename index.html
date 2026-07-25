@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="theme-color" content="#0a0c10" />
+    <title>CHRONOBLOCK — One City Block, 110 Years</title>
+    <meta
+      name="description"
+      content="An interactive 3D city block that rebuilds itself across six eras: 1945, 1965, 1985, 2005, 2025 and 2055."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./src/ui/style.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b0e14'/%3E%3Cpath d='M6 24V13l5-3 5 3v11z' fill='%23f0a24b'/%3E%3Cpath d='M18 24V9l8-4v19z' fill='%2354d6e0'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+
+    <!-- ==================== BOOT / LOADING ==================== -->
+    <div id="boot" class="boot">
+      <div class="boot__inner">
+        <div class="boot__mark">
+          <span class="boot__mark-a">CHRONO</span><span class="boot__mark-b">BLOCK</span>
+        </div>
+        <div class="boot__tag">ONE CITY BLOCK &middot; SIX ERAS &middot; 110 YEARS</div>
+        <div class="boot__bar"><i id="boot-bar-fill"></i></div>
+        <div id="boot-status" class="boot__status">initialising temporal lattice…</div>
+        <button id="boot-enter" class="boot__enter" disabled>
+          <span class="boot__enter-label">ENTER THE BLOCK</span>
+          <span class="boot__enter-sub">click to enable audio</span>
+        </button>
+        <div class="boot__legal">
+          Everything you are about to see — geometry, textures, signage and sound — is generated
+          procedurally in your browser. No downloaded assets.
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TIMELINE (TOP) ==================== -->
+    <header id="timeline" class="timeline" aria-label="Era timeline">
+      <div class="timeline__brand">
+        <div class="timeline__logo">CHRONO<b>BLOCK</b></div>
+        <div class="timeline__addr">14th &amp; Kessler &middot; lot 0041</div>
+      </div>
+
+      <div class="timeline__main">
+        <div class="timeline__rail" id="rail" role="slider" tabindex="0" aria-valuemin="1945"
+             aria-valuemax="2055" aria-valuenow="1945" aria-label="Select year">
+          <div class="rail__track"></div>
+          <div class="rail__progress" id="rail-progress"></div>
+          <div class="rail__ticks" id="rail-ticks"></div>
+          <div class="rail__thumb" id="rail-thumb">
+            <div class="thumb__ring"></div>
+            <div class="thumb__year" id="thumb-year">1945</div>
+          </div>
+        </div>
+        <div class="timeline__labels" id="rail-labels"></div>
+      </div>
+
+      <div class="timeline__meta">
+        <div class="meta__era" id="meta-era">POST-WAR BOOM</div>
+        <div class="meta__sub" id="meta-sub">V-J Day + 3 months · the block is brick and coal smoke</div>
+        <div class="timeline__transport">
+          <button class="tbtn" id="btn-prev" title="Previous era (←)" aria-label="Previous era">◀</button>
+          <button class="tbtn tbtn--play" id="btn-play" title="Auto-advance through time (Space)" aria-label="Play timeline">▶</button>
+          <button class="tbtn" id="btn-next" title="Next era (→)" aria-label="Next era">▶</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ==================== ERA DOSSIER (RIGHT) ==================== -->
+    <aside id="dossier" class="dossier">
+      <div class="dossier__head">
+        <div class="dossier__year" id="dossier-year">1945</div>
+        <div class="dossier__title" id="dossier-title">Post-War Boom</div>
+      </div>
+      <p class="dossier__body" id="dossier-body"></p>
+      <div class="dossier__swatches" id="dossier-swatches"></div>
+      <ul class="dossier__facts" id="dossier-facts"></ul>
+      <div class="dossier__foot">
+        <span class="dossier__foot-k">SOUNDSCAPE</span>
+        <span class="dossier__foot-v" id="dossier-audio">big band radio · streetcar bells</span>
+      </div>
+    </aside>
+
+    <!-- ==================== INSPECTOR TOOLTIP ==================== -->
+    <div id="inspector" class="inspector">
+      <div class="inspector__year" id="inspector-year"></div>
+      <div class="inspector__name" id="inspector-name"></div>
+      <div class="inspector__desc" id="inspector-desc"></div>
+    </div>
+
+    <!-- ==================== HUD (BOTTOM LEFT) ==================== -->
+    <div id="hud" class="hud">
+      <div class="hud__row hud__modes" id="camera-modes">
+        <button class="chip is-on" data-mode="orbit">ORBIT</button>
+        <button class="chip" data-mode="walk">WALK</button>
+        <button class="chip" data-mode="drone">DRONE</button>
+        <button class="chip" data-mode="cinema">CINEMATIC</button>
+      </div>
+      <div class="hud__row hud__views" id="view-presets"></div>
+      <div class="hud__row hud__toggles">
+        <button class="chip chip--icon is-on" id="btn-audio" title="Master audio (M)">
+          <span class="ico">♪</span><span>AUDIO</span>
+        </button>
+        <button class="chip chip--icon is-on" id="btn-weather" title="Era weather (W)">
+          <span class="ico">☂</span><span>WEATHER</span>
+        </button>
+        <button class="chip chip--icon is-on" id="btn-grade" title="Film grade (G)">
+          <span class="ico">◐</span><span>GRADE</span>
+        </button>
+        <button class="chip chip--icon" id="btn-night" title="Toggle night (N)">
+          <span class="ico">☾</span><span>NIGHT</span>
+        </button>
+        <button class="chip chip--icon" id="btn-quality" title="Render quality (Q)">
+          <span class="ico">▦</span><span id="quality-label">QUALITY: HIGH</span>
+        </button>
+        <button class="chip chip--icon" id="btn-help" title="Controls (H)">
+          <span class="ico">?</span><span>KEYS</span>
+        </button>
+      </div>
+      <div class="hud__hint" id="hud-hint">drag to orbit · scroll to zoom · click anything to inspect it</div>
+    </div>
+
+    <!-- ==================== STATS (BOTTOM RIGHT) ==================== -->
+    <div id="stats" class="stats">
+      <span id="stat-fps">-- fps</span>
+      <span class="stats__sep">/</span>
+      <span id="stat-draws">-- draws</span>
+      <span class="stats__sep">/</span>
+      <span id="stat-tris">-- tris</span>
+    </div>
+
+    <!-- ==================== HELP OVERLAY ==================== -->
+    <div id="help" class="help">
+      <div class="help__card">
+        <button class="help__close" id="help-close" aria-label="Close">✕</button>
+        <h2>CONTROLS</h2>
+        <div class="help__grid">
+          <section>
+            <h3>Time</h3>
+            <dl>
+              <dt>← / →</dt><dd>previous / next era</dd>
+              <dt>1 … 6</dt><dd>jump straight to an era</dd>
+              <dt>Space</dt><dd>auto-advance through time</dd>
+            </dl>
+          </section>
+          <section>
+            <h3>Camera</h3>
+            <dl>
+              <dt>Drag</dt><dd>orbit the block</dd>
+              <dt>Scroll</dt><dd>dolly in / out</dd>
+              <dt>W A S D</dt><dd>move (walk &amp; drone modes)</dd>
+              <dt>Shift</dt><dd>sprint</dd>
+              <dt>R / F</dt><dd>rise / drop (drone)</dd>
+              <dt>Esc</dt><dd>release mouse look</dd>
+              <dt>C</dt><dd>cycle camera mode</dd>
+              <dt>V</dt><dd>cycle saved viewpoints</dd>
+            </dl>
+          </section>
+          <section>
+            <h3>World</h3>
+            <dl>
+              <dt>Click</dt><dd>inspect any object</dd>
+              <dt>N</dt><dd>day / night</dd>
+              <dt>W</dt><dd>weather on / off</dd>
+              <dt>G</dt><dd>film grade on / off</dd>
+              <dt>M</dt><dd>mute / unmute</dd>
+              <dt>Q</dt><dd>render quality</dd>
+              <dt>P</dt><dd>save a screenshot</dd>
+            </dl>
+          </section>
+        </div>
+        <p class="help__foot">
+          Built with three.js. Geometry, textures, signage and every sound are synthesised at runtime.
+        </p>
+      </div>
+    </div>
+
+    <!-- ==================== ERA FLASH ==================== -->
+    <div id="flash" class="flash"><span id="flash-year">1945</span></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
