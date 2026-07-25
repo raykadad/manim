@@ -129,3 +129,8 @@ and writes a PNG per era, reporting any console errors:
 npm run dev
 node tools/shoot.mjs --years=1945,1985,2055 --preset=3 --out=shots
 ```
+
+Alongside it: `tools/verify.mjs` exercises every camera mode, holds the dissolve
+mid-wipe and shoots the full era set; `tools/stats.mjs` prints the draw call and
+triangle budget per era; `tools/probe.mjs` points the camera anywhere you like
+(`node tools/probe.mjs <eraIndex> <x,y,z> <tx,ty,tz> <out.png> [--night]`).
