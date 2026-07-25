@@ -34,7 +34,7 @@ export function StudioEnvironment({ intensity = 1 }: { intensity?: number }) {
       {/* the two grazing strips that draw long highlights down polished flanks */}
       <Lightformer
         form="rect"
-        intensity={1.55 * intensity}
+        intensity={1.15 * intensity}
         color="#eef4ff"
         position={[-6.5, 2.8, 1.2]}
         scale={[0.65, 10, 1]}

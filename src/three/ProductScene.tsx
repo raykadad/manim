@@ -4,6 +4,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { ContactShadows, MeshReflectorMaterial, OrbitControls } from '@react-three/drei'
 import {
   Bloom,
+  DepthOfField,
   EffectComposer,
   ToneMapping,
   Vignette,
@@ -13,6 +14,8 @@ import { BackdropGlow, StudioEnvironment } from './Studio'
 import { Watch } from './Watch'
 import type { WatchSpec } from './watchSpecs'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
+
+const FOCUS = new THREE.Vector3(0, 0.5, 0)
 
 /**
  * A slow sway rather than a full revolution — the dial stays legible while
@@ -121,12 +124,18 @@ export function ProductScene({ spec, active, glow = '#2b3440' }: Props) {
       <KeepFresh />
 
       <EffectComposer multisampling={4} enableNormalPass={false}>
+        <DepthOfField
+          target={FOCUS}
+          worldFocusRange={3.4}
+          bokehScale={1.7}
+          height={560}
+        />
         <Bloom
-          intensity={0.55}
-          luminanceThreshold={0.85}
-          luminanceSmoothing={0.3}
+          intensity={0.4}
+          luminanceThreshold={0.95}
+          luminanceSmoothing={0.24}
           mipmapBlur
-          radius={0.7}
+          radius={0.62}
         />
         <Vignette offset={0.3} darkness={0.6} />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />

@@ -214,13 +214,13 @@ export function buildWatch(spec: WatchSpec) {
   const idxLen = 0.3 * R
   const idxHalfW = 0.038 * R
   const idxH = 0.05 * R
-  const idxChamfer = idxHalfW * 0.36
+  const idxChamfer = idxHalfW * 0.28
 
   const indexPoly = roundedRect(idxLen / 2, idxHalfW, idxHalfW * 0.4, 3)
   const baseIndex = chamferedPrism(indexPoly, {
     height: idxH,
     chamferTop: idxChamfer,
-    chamferRise: idxH * 0.5,
+    chamferRise: idxH * 0.42,
   })
   const baseLume = chamferedPrism(insetPolygon(indexPoly, idxChamfer * 1.2), {
     height: idxH * 0.05,
@@ -252,7 +252,12 @@ export function buildWatch(spec: WatchSpec) {
     }
   }
 
-  for (let h = 1; h < 12; h++) placeIndex(h / 12, 0)
+  // the date aperture takes the place of the three o'clock index
+  const dateHour = spec.dial.date ? Math.round(((spec.dial.dateAngle ?? 90) / 360) * 12) : -1
+  for (let h = 1; h < 12; h++) {
+    if (h === dateHour) continue
+    placeIndex(h / 12, 0)
+  }
   placeIndex(0, idxHalfW * 1.4, 0.85)
   placeIndex(0, -idxHalfW * 1.4, 0.85)
   baseIndex.dispose()
@@ -375,15 +380,15 @@ export function buildWatch(spec: WatchSpec) {
     ],
     { height: 0.014 * R },
   )
-  const weight = new THREE.CylinderGeometry(0.046 * R, 0.046 * R, 0.014 * R, 40)
+  const weight = new THREE.CylinderGeometry(0.042 * R, 0.042 * R, 0.014 * R, 40)
   const secGeos = [
     transformed(secBar, orient(secondTurns, dialY + 0.074 * R)),
     transformed(
       weight,
       new THREE.Matrix4().makeTranslation(
-        secDir.x * -0.128 * R,
+        secDir.x * -0.112 * R,
         dialY + 0.081 * R,
-        secDir.z * -0.128 * R,
+        secDir.z * -0.112 * R,
       ),
     ),
   ]

@@ -131,8 +131,14 @@ export function createWoodMaps(): SurfaceMaps & { map: THREE.Texture } {
         smoothstep(0.82, 0.93, fbm(pores, u * 34, v * 420, 2)) *
         smoothstep(0.4, 0.62, fibres)
 
+      // glue line between planks, once per tile
+      const edge = Math.min(v, 1 - v)
+      const seam = 1 - smoothstep(0.0, 0.006, edge)
+
       // tonal blend
-      const t = clamp01(0.44 + (fibres - 0.5) * 0.66 - ringLine * 0.4 - pore * 0.38)
+      const t = clamp01(
+        0.44 + (fibres - 0.5) * 0.66 - ringLine * 0.4 - pore * 0.38 - seam * 0.55,
+      )
       const base = t < 0.5 ? mixArr(dark, mid, t * 2) : mixArr(mid, light, (t - 0.5) * 2)
 
       // broad colour drift so the slab is not uniform
@@ -143,8 +149,8 @@ export function createWoodMaps(): SurfaceMaps & { map: THREE.Texture } {
       img.data[o + 2] = clamp01(base[2] + drift * 0.7) ** (1 / 2.2) * 255
       img.data[o + 3] = 255
 
-      rough[i] = 0.3 + ringLine * 0.12 + pore * 0.24 + (fibres - 0.5) * 0.06
-      height[i] = -ringLine * 0.3 - pore * 0.8 + fibres * 0.22
+      rough[i] = 0.3 + ringLine * 0.12 + pore * 0.24 + (fibres - 0.5) * 0.06 + seam * 0.28
+      height[i] = -ringLine * 0.3 - pore * 0.8 + fibres * 0.22 - seam * 2.4
     }
   }
   ctx.putImageData(img, 0, 0)
@@ -277,10 +283,11 @@ function drawFurniture(ctx: Ctx, spec: DialSpec, pal: FurniturePalette, size: nu
 
   if (spec.date) {
     const a = ((spec.dateAngle ?? 90) * Math.PI) / 180 - Math.PI / 2
-    const w = R * 0.135
-    const h = R * 0.1
+    const w = R * 0.15
+    const h = R * 0.108
     ctx.save()
-    ctx.translate(Math.cos(a) * R * 0.585, Math.sin(a) * R * 0.585)
+    // sits where the index it replaces would have been
+    ctx.translate(Math.cos(a) * R * 0.655, Math.sin(a) * R * 0.655)
     roundRect(ctx, -w / 2, -h / 2, w, h, R * 0.012)
     ctx.fillStyle = pal.window
     ctx.fill()

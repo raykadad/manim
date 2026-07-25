@@ -92,9 +92,9 @@ function HeroContents({ still }: { still: boolean }) {
         position={[0, 0.004, 0]}
         scale={26}
         resolution={1024}
-        blur={2.4}
+        blur={2}
         far={3}
-        opacity={0.62}
+        opacity={0.74}
         color="#000000"
       />
 
