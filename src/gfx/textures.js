@@ -808,7 +808,7 @@ export function marqueeTexture({ line1 = 'NOW SHOWING', line2 = 'CASABLANCA', bg
   const key = `marquee|${line1}|${line2}|${bg}|${ink}|${accent}|${emissive}|${bulbs}`;
   return memo(key, () => {
     const w = 1024;
-    const h = 320;
+    const h = 420;
     const { canvas, ctx } = createCanvas(w, h);
     fill(ctx, w, h, emissive ? '#000' : bg);
     if (!emissive) {

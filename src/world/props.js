@@ -1001,8 +1001,7 @@ export function buildBillboards(era, pool, lotMap, seed = 1) {
         emissive: new THREE.Color('#ffffff'),
         emissiveMap: em,
         emissiveIntensity: isDigital ? 2.2 : era.year >= 1965 ? 0.5 : 0.12,
-        roughness: 0.8,
-        side: THREE.DoubleSide
+        roughness: 0.8
       })
     );
 
@@ -1010,8 +1009,9 @@ export function buildBillboards(era, pool, lotMap, seed = 1) {
     const bh = bw * 0.5;
     const holder = new THREE.Group();
     holder.add(plane(mat, bw, bh, 0, 0, 0.12));
-    // hoarding frame
+    // hoarding frame + a blank back so the sign is not readable in reverse
     const frameMat = pool.get('bbframe', () => makeStandard(pool.field, { color: '#5f5c54', metalness: 0.4, roughness: 0.6 }));
+    holder.add(box(frameMat, bw + 0.3, bh + 0.3, 0.16, 0, 0, -0.02));
     holder.add(box(frameMat, bw + 0.4, 0.24, 0.3, 0, bh / 2 + 0.1, 0));
     holder.add(box(frameMat, bw + 0.4, 0.24, 0.3, 0, -bh / 2 - 0.1, 0));
     holder.add(box(frameMat, 0.24, bh + 0.5, 0.3, -bw / 2 - 0.1, 0, 0));

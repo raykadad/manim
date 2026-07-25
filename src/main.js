@@ -117,7 +117,11 @@ class Chronoblock {
       if (!downAt) return;
       const moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
       const quick = performance.now() - downAt.t < 420;
-      if (moved < 6 && quick) this.pick(e.clientX, e.clientY);
+      const settled = performance.now() - (this._lastPick || 0) > 140;
+      if (moved < 6 && quick && settled) {
+        this._lastPick = performance.now();
+        this.pick(e.clientX, e.clientY);
+      }
       downAt = null;
     });
   }

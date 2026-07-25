@@ -209,7 +209,7 @@ function bladeSign(pool, era, blade, w, y, seed) {
   holder.add(box(flat(pool, '#2b2b28', { metalness: 0.6 }), 0.1, bh, 0.1, 0, 0, -bw * 0.55));
   holder.add(box(flat(pool, '#2b2b28', { metalness: 0.6 }), 0.1, 0.1, 1.6, 0, bh / 2 - 0.2, -bw * 0.9));
   holder.add(box(flat(pool, '#2b2b28', { metalness: 0.6 }), 0.1, 0.1, 1.6, 0, -bh / 2 + 0.6, -bw * 0.9));
-  holder.position.set(-w * 0.34, y, 1.35);
+  holder.position.set(-w * 0.26, y, 1.35);
   const halo = plane(
     pool.get(`bladehalo|${blade.ink}`, () => makeGlow({ color: blade.ink, map: glowTexture(blade.ink, 0.5), opacity: 0.42 })),
     bw * 3.2,
@@ -230,6 +230,7 @@ function marquee(pool, era, cfg, w, y, seed) {
   const SIGN_H = SIGN_BASE;
   const g = new THREE.Group();
   const depth = 3.2;
+  const faceH = 2.35;
   const map = marqueeTexture({ ...cfg, seed });
   const em = marqueeTexture({ ...cfg, seed, emissive: true });
   const mat = pool.get(`marquee|${cfg.line2}`, () =>
@@ -244,26 +245,26 @@ function marquee(pool, era, cfg, w, y, seed) {
   const soffitMat = flat(pool, '#e8dfc4', { roughness: 0.8 });
 
   // the box: front face + two angled returns + underside full of bulbs
-  const front = plane(mat, w * 0.92, 1.7, 0, y, depth);
+  const front = plane(mat, w * 0.92, faceH, 0, y, depth);
   g.add(front);
-  const sideL = plane(mat, depth * 0.9, 1.7, -w * 0.46, y, depth * 0.55);
+  const sideL = plane(mat, depth * 0.9, faceH, -w * 0.46, y, depth * 0.55);
   sideL.rotation.y = Math.PI / 2;
   g.add(sideL);
-  const sideR = plane(mat, depth * 0.9, 1.7, w * 0.46, y, depth * 0.55);
+  const sideR = plane(mat, depth * 0.9, faceH, w * 0.46, y, depth * 0.55);
   sideR.rotation.y = -Math.PI / 2;
   g.add(sideR);
-  g.add(box(flat(pool, cfg.accent, { roughness: 0.6 }), w * 0.94, 0.22, depth + 0.12, 0, y + 0.92, depth / 2));
-  g.add(box(flat(pool, cfg.accent, { roughness: 0.6 }), w * 0.94, 0.2, depth + 0.12, 0, y - 0.92, depth / 2));
+  g.add(box(flat(pool, cfg.accent, { roughness: 0.6 }), w * 0.94, 0.24, depth + 0.12, 0, y + faceH / 2 + 0.06, depth / 2));
+  g.add(box(flat(pool, cfg.accent, { roughness: 0.6 }), w * 0.94, 0.22, depth + 0.12, 0, y - faceH / 2 - 0.06, depth / 2));
 
   // glowing underside
-  const soffit = plane(emis(pool, '#ffeec8', 1.5), w * 0.9, depth, 0, y - 0.95, depth / 2);
+  const soffit = plane(emis(pool, '#ffeec8', 1.5), w * 0.9, depth, 0, y - faceH / 2 - 0.14, depth / 2);
   soffit.rotation.x = Math.PI / 2;
   g.add(soffit);
-  const bulbMat = emis(pool, '#fff0cc', 3);
+  const bulbMat = emis(pool, '#fff0cc', 1.7);
   const bulbs = [];
   for (let i = 0; i < 14; i++) {
     for (let j = 0; j < 3; j++) {
-      const b = sphere(bulbMat, 0.075, -w * 0.42 + i * (w * 0.065), y - 0.99, 0.5 + j * (depth / 3), 6);
+      const b = sphere(bulbMat, 0.07, -w * 0.42 + i * (w * 0.065), y - faceH / 2 - 0.18, 0.5 + j * (depth / 3), 6);
       b.userData.noMerge = true;
       bulbs.push(b);
       g.add(b);
@@ -273,7 +274,7 @@ function marquee(pool, era, cfg, w, y, seed) {
 
   // hangers
   for (const sx of [-1, 1]) {
-    const rod = cyl(flat(pool, '#2f2c28', { metalness: 0.6 }), 0.05, 2.6, sx * w * 0.38, y + 2.1, depth * 0.75, 6);
+    const rod = cyl(flat(pool, '#2f2c28', { metalness: 0.6 }), 0.05, 2.6, sx * w * 0.38, y + faceH / 2 + 1.3, depth * 0.75, 6);
     rod.rotation.x = 0.5;
     g.add(rod);
   }

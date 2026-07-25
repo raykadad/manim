@@ -121,18 +121,36 @@ function buildWindow(pool, era, spec, w, h, rng, floorIdx) {
     : glassMat(pool, win.glass || '#2a323c', { opacity: win.smart ? 0.75 : 0.62, roughness: win.smart ? 0.05 : 0.12 });
 
   if (win.style === 'arched') {
-    const shape = [
-      [-w / 2, -h / 2],
-      [w / 2, -h / 2],
-      [w / 2, h * 0.16],
-      [0, h / 2],
-      [-w / 2, h * 0.16]
-    ];
-    const frame = extrude(shape, 0.16, frameMat, 0);
-    g.add(frame);
-    const inner = extrude(shape.map(([x, y]) => [x * 0.82, y * 0.85]), 0.1, glass);
-    inner.position.z = 0.06;
-    g.add(inner);
+    const archShape = (ww, hh) => {
+      const s = new THREE.Shape();
+      const r = ww / 2;
+      const springing = hh / 2 - r;
+      s.moveTo(-r, -hh / 2);
+      s.lineTo(r, -hh / 2);
+      s.lineTo(r, springing);
+      s.absarc(0, springing, r, 0, Math.PI, false);
+      s.lineTo(-r, -hh / 2);
+      return s;
+    };
+    const trimMat = flat(pool, spec.cornice?.color || '#9b8a70');
+    // the surround is a ring, so the glass reads through it
+    const outer = archShape(w + 0.36, h + 0.36);
+    outer.holes.push(new THREE.Path(archShape(w, h).getPoints(26).reverse()));
+    const surround = new THREE.Mesh(new THREE.ExtrudeGeometry(outer, { depth: 0.22, bevelEnabled: false }), trimMat);
+    surround.position.z = -0.04;
+    g.add(surround);
+    const reveal = new THREE.Mesh(new THREE.ExtrudeGeometry(archShape(w, h), { depth: 0.26, bevelEnabled: false }), frameMat);
+    reveal.position.z = -0.16;
+    g.add(reveal);
+    const pane = new THREE.Mesh(new THREE.ExtrudeGeometry(archShape(w - 0.16, h - 0.16), { depth: 0.06, bevelEnabled: false }), glass);
+    pane.position.z = -0.02;
+    g.add(pane);
+    // glazing bars
+    g.add(box(frameMat, w - 0.16, 0.05, 0.09, 0, -h * 0.1, 0.06));
+    g.add(box(frameMat, 0.05, h * 0.78, 0.09, 0, -h * 0.06, 0.06));
+    // keystone + sill
+    g.add(box(trimMat, 0.2, 0.3, 0.26, 0, h / 2 + 0.12, 0.06));
+    g.add(box(trimMat, w + 0.6, 0.14, 0.32, 0, -h / 2 - 0.16, 0.08));
   } else if (win.style === 'strip') {
     g.add(box(frameMat, w, h, 0.14));
     g.add(box(glass, w * 0.94, h * 0.82, 0.1, 0, 0, 0.05));
