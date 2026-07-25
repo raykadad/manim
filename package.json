@@ -1,0 +1,19 @@
+{
+  "name": "chronoblock",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "CHRONOBLOCK — an interactive 3D city block that travels through time (1945 → 2055)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.0",
+    "vite": "^7.0.0"
+  }
+}
