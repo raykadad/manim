@@ -623,6 +623,111 @@ figure {
 
 /* about */
 
+.about__aside {
+  display: grid;
+  gap: clamp(2.5rem, 6vh, 4.5rem);
+  align-content: start;
+}
+
+.drawing {
+  margin: 0;
+  display: grid;
+  gap: 1.1rem;
+  max-width: 420px;
+}
+
+.drawing svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.drawing__thin line {
+  stroke: rgba(241, 238, 232, 0.22);
+  stroke-width: 0.008;
+}
+
+.drawing__part {
+  stroke: rgba(241, 238, 232, 0.6);
+  stroke-width: 0.014;
+  stroke-linejoin: round;
+}
+
+.drawing__glass {
+  stroke: var(--gold);
+  stroke-width: 0.012;
+  fill: rgba(198, 164, 105, 0.06);
+}
+
+.drawing__dim line,
+.drawing__dim path {
+  stroke: var(--gold);
+  stroke-width: 0.008;
+}
+
+.drawing__dim text,
+.drawing__note text {
+  font-family: var(--sans);
+  font-size: 0.135px;
+  letter-spacing: 0.02px;
+  fill: var(--gold);
+  stroke: none;
+}
+
+.drawing__note text {
+  font-size: 0.115px;
+  letter-spacing: 0.035px;
+  fill: rgba(241, 238, 232, 0.45);
+}
+
+.drawing__lead {
+  stroke: rgba(241, 238, 232, 0.28);
+  stroke-width: 0.007;
+}
+
+.drawing figcaption {
+  font-size: 0.5625rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.drawing__block {
+  margin: 0.75rem 0 0;
+  display: grid;
+  border-top: 1px solid var(--line-soft);
+}
+
+.drawing__block > div {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.drawing__block dt {
+  font-size: 0.5625rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+  align-self: center;
+}
+
+.drawing__block dd {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(241, 238, 232, 0.72);
+}
+
+@media (max-width: 900px) {
+  .drawing {
+    max-width: 340px;
+  }
+}
+
 .about__title {
   font-size: clamp(2.25rem, 4.6vw, 4.4rem);
   max-width: 14ch;

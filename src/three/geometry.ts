@@ -1,116 +1,8 @@
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { insetPolygon, signedArea } from './profile'
 
-export const V2 = (x: number, y: number) => new THREE.Vector2(x, y)
-
-/* ------------------------------------------------------------------ */
-/* 2D profile helpers                                                  */
-/* ------------------------------------------------------------------ */
-
-/**
- * Rounds the interior corners of a polyline. Used to build lathe profiles
- * with the tight, light-catching chamfers a machined watch case has.
- */
-export function fillet(points: THREE.Vector2[], radii: number[], seg = 5) {
-  const out: THREE.Vector2[] = [points[0].clone()]
-  for (let i = 1; i < points.length - 1; i++) {
-    const r = radii[i] ?? 0
-    const p = points[i]
-    const a = points[i - 1]
-    const b = points[i + 1]
-    const v1 = a.clone().sub(p)
-    const v2 = b.clone().sub(p)
-    const l1 = v1.length()
-    const l2 = v2.length()
-    if (r <= 0 || l1 < 1e-6 || l2 < 1e-6) {
-      out.push(p.clone())
-      continue
-    }
-    v1.divideScalar(l1)
-    v2.divideScalar(l2)
-    const cos = THREE.MathUtils.clamp(v1.dot(v2), -1, 1)
-    const angle = Math.acos(cos)
-    if (angle < 1e-3 || Math.PI - angle < 1e-3) {
-      out.push(p.clone())
-      continue
-    }
-    const half = angle / 2
-    let t = r / Math.tan(half)
-    t = Math.min(t, l1 * 0.49, l2 * 0.49)
-    const rr = t * Math.tan(half)
-    const t1 = p.clone().addScaledVector(v1, t)
-    const t2 = p.clone().addScaledVector(v2, t)
-    const bis = v1.clone().add(v2)
-    if (bis.lengthSq() < 1e-9) {
-      out.push(p.clone())
-      continue
-    }
-    bis.normalize()
-    const centre = p.clone().addScaledVector(bis, rr / Math.sin(half))
-    const a1 = Math.atan2(t1.y - centre.y, t1.x - centre.x)
-    const a2 = Math.atan2(t2.y - centre.y, t2.x - centre.x)
-    let d = a2 - a1
-    while (d > Math.PI) d -= Math.PI * 2
-    while (d < -Math.PI) d += Math.PI * 2
-    for (let s = 0; s <= seg; s++) {
-      const ang = a1 + d * (s / seg)
-      out.push(V2(centre.x + Math.cos(ang) * rr, centre.y + Math.sin(ang) * rr))
-    }
-  }
-  out.push(points[points.length - 1].clone())
-  return out
-}
-
-export function roundedRect(hw: number, hh: number, r: number, seg = 4) {
-  const rr = Math.min(r, hw * 0.999, hh * 0.999)
-  const pts: THREE.Vector2[] = []
-  const corners: [number, number, number][] = [
-    [hw - rr, hh - rr, 0],
-    [-hw + rr, hh - rr, Math.PI / 2],
-    [-hw + rr, -hh + rr, Math.PI],
-    [hw - rr, -hh + rr, -Math.PI / 2],
-  ]
-  for (const [cx, cy, a0] of corners) {
-    for (let i = 0; i <= seg; i++) {
-      const a = a0 + (i / seg) * (Math.PI / 2)
-      pts.push(V2(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr))
-    }
-  }
-  return pts
-}
-
-function signedArea(pts: THREE.Vector2[]) {
-  let a = 0
-  for (let i = 0; i < pts.length; i++) {
-    const p = pts[i]
-    const q = pts[(i + 1) % pts.length]
-    a += p.x * q.y - q.x * p.y
-  }
-  return a / 2
-}
-
-export function insetPolygon(pts: THREE.Vector2[], d: number) {
-  const n = pts.length
-  const out: THREE.Vector2[] = []
-  for (let i = 0; i < n; i++) {
-    const prev = pts[(i - 1 + n) % n]
-    const cur = pts[i]
-    const next = pts[(i + 1) % n]
-    const e1 = cur.clone().sub(prev).normalize()
-    const e2 = next.clone().sub(cur).normalize()
-    const n1 = V2(-e1.y, e1.x)
-    const n2 = V2(-e2.y, e2.x)
-    const denom = 1 + n1.dot(n2)
-    if (denom < 1e-3) {
-      out.push(cur.clone().addScaledVector(n1, d))
-      continue
-    }
-    const m = n1.clone().add(n2).multiplyScalar(1 / denom)
-    if (m.length() > 4) m.setLength(4)
-    out.push(cur.clone().addScaledVector(m, d))
-  }
-  return out
-}
+export { V2, fillet, roundedRect, insetPolygon, signedArea, stitchRowsFor, strapSection, strapStitchRows } from './profile'
 
 /* ------------------------------------------------------------------ */
 /* chamfered prism — indices, hands, bracelet links, buckle            */
@@ -302,28 +194,6 @@ export function sweepGeometry(
   geo.setIndex(index)
   geo.computeVertexNormals()
   return geo
-}
-
-/** v coordinates of the two stitch lines for a swept strap section. */
-export function stitchRowsFor(section: THREE.Vector2[], inset: number) {
-  const n = section.length
-  let total = 0
-  const cum: number[] = [0]
-  for (let i = 1; i <= n; i++) {
-    total += section[i % n].distanceTo(section[i - 1])
-    cum.push(total)
-  }
-  // find the two points closest to the outer top corners
-  const top = section
-    .map((p, i) => ({ p, i }))
-    .filter(({ p }) => p.y > 0)
-  const left = top.reduce((a, b) => (b.p.x < a.p.x ? b : a))
-  const right = top.reduce((a, b) => (b.p.x > a.p.x ? b : a))
-  const width = right.p.x - left.p.x
-  const f = inset / (width || 1)
-  const vl = cum[left.i] / total
-  const vr = cum[right.i] / total
-  return [vl + (vr - vl) * f, vr - (vr - vl) * f].sort((a, b) => a - b) as [number, number]
 }
 
 /* ------------------------------------------------------------------ */

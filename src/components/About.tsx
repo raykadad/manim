@@ -1,6 +1,5 @@
-import { getDial, getLeather, getWood } from '../three/assets'
-import { strapStitchRows } from '../three/buildWatch'
 import { MODELS } from '../three/watchSpecs'
+import { CaseDrawing } from './CaseDrawing'
 import { MaterialSwatch } from './MaterialSwatch'
 import { Reveal } from './primitives'
 
@@ -19,9 +18,14 @@ export function About() {
     <section className="section" id="house">
       <div className="shell">
         <div className="section__head">
-          <Reveal>
-            <p className="eyebrow">01 — The house</p>
-          </Reveal>
+          <div className="about__aside">
+            <Reveal>
+              <p className="eyebrow">01 — The house</p>
+            </Reveal>
+            <Reveal delay={240}>
+              <CaseDrawing diameter={solstice.diameter} />
+            </Reveal>
+          </div>
           <div className="about__copy">
             <Reveal delay={80}>
               <h2 className="display about__title">
@@ -81,14 +85,16 @@ export function About() {
           <MaterialSwatch
             name="American black walnut"
             desc="Cathedral grain flowed around a distorted centre line, with pore speckle and ring darkening driving both the colour and the roughness of the table."
-            source={() => getWood().map.image as HTMLCanvasElement}
+            source={async () =>
+              (await import('../three/assets')).getWood().map.image as HTMLCanvasElement
+            }
             crop={[0.08, 0.1, 0.5, 0.55]}
           />
           <MaterialSwatch
             name="Marine azure sunburst"
             desc="A fumé lacquer gradient, fifteen hundred radial spokes, and a printed minute track — the same canvas that feeds the dial's albedo, metalness and roughness."
-            source={() =>
-              getDial({
+            source={async () =>
+              (await import('../three/assets')).getDial({
                 ...solstice.dialBase,
                 ...solstice.colourways[0].dial,
               }).map.image as HTMLCanvasElement
@@ -98,8 +104,12 @@ export function About() {
           <MaterialSwatch
             name="Cognac alligator"
             desc="Two-tone Worley cells raised into a height field, converted to a normal map, then saddle-stitched by hand along both edges of the strap."
-            source={() => {
+            source={async () => {
               const band = meridian.band as Extract<typeof meridian.band, { kind: 'leather' }>
+              const [{ getLeather }, { strapStitchRows }] = await Promise.all([
+                import('../three/assets'),
+                import('../three/profile'),
+              ])
               return getLeather(band.color, band.stitch, strapStitchRows()).map
                 .image as HTMLCanvasElement
             }}

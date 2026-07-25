@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 type Props = {
-  source: () => HTMLCanvasElement
+  source: () => Promise<HTMLCanvasElement>
   /** 0-1 crop box, in source-canvas space */
   crop?: [number, number, number, number]
   name: string
@@ -19,10 +19,10 @@ export function MaterialSwatch({ source, crop = [0, 0, 1, 1], name, desc }: Prop
     const target = ref.current
     if (!target) return
     let cancelled = false
-    // baking is synchronous and heavy — let the section paint first
-    const id = window.setTimeout(() => {
+    // baking is heavy and synchronous — let the section paint first
+    const id = window.setTimeout(async () => {
+      const src = await source()
       if (cancelled) return
-      const src = source()
       const box = target.getBoundingClientRect()
       const dpr = Math.min(window.devicePixelRatio, 2)
       target.width = Math.round(box.width * dpr)

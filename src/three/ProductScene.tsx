@@ -9,7 +9,7 @@ import {
   Vignette,
 } from '@react-three/postprocessing'
 import { ToneMappingMode } from 'postprocessing'
-import { StudioEnvironment } from './Studio'
+import { BackdropGlow, StudioEnvironment } from './Studio'
 import { Watch } from './Watch'
 import type { WatchSpec } from './watchSpecs'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
@@ -38,6 +38,9 @@ type Props = {
 export function ProductScene({ spec, active, glow = '#2b3440' }: Props) {
   const reduced = usePrefersReducedMotion()
   const [ready, setReady] = useState(false)
+  // frame every reference identically regardless of case size
+  const k = spec.diameter / 39
+  const eye: [number, number, number] = [3.5 * k, 8.1 * k, 6.5 * k]
 
   return (
     <Canvas
@@ -46,7 +49,7 @@ export function ProductScene({ spec, active, glow = '#2b3440' }: Props) {
       frameloop={active ? 'always' : 'demand'}
       dpr={[1, 1.75]}
       gl={{ antialias: false, powerPreference: 'high-performance' }}
-      camera={{ fov: 24, near: 0.5, far: 120, position: [3.5, 7.9, 6.4] }}
+      camera={{ fov: 24, near: 0.5, far: 120, position: eye }}
       onCreated={({ gl }) => {
         gl.transmissionResolutionScale = 1
         setReady(true)
@@ -58,10 +61,7 @@ export function ProductScene({ spec, active, glow = '#2b3440' }: Props) {
 
       <StudioEnvironment intensity={1.05} />
 
-      <mesh position={[0, 4, -16]} scale={[34, 22, 1]}>
-        <planeGeometry />
-        <meshBasicMaterial color={glow} fog={false} toneMapped={false} />
-      </mesh>
+      <BackdropGlow position={[0, 4.5, -15]} scale={38} inner={glow} />
 
       <spotLight
         position={[5, 13, 6]}

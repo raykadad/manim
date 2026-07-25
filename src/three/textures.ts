@@ -409,7 +409,7 @@ export function createDialMaps(spec: DialSpec): DialMaps {
     }
     rough.ctx.putImageData(img, 0, 0)
   } else {
-    rough.ctx.fillStyle = spec.finish === 'lacquer' ? '#1a1a1a' : '#3d3d3d'
+    rough.ctx.fillStyle = spec.finish === 'lacquer' ? '#1c1c1c' : '#4f4f4f'
     rough.ctx.fillRect(0, 0, RSIZE, RSIZE)
   }
   drawFurniture(
@@ -491,14 +491,14 @@ export function createGuillocheNormalMap() {
       const v = (y + 0.5) / N - 0.5
       const r = Math.hypot(u, v)
       const a = Math.atan2(v, u)
-      const rings = Math.sin(r * 300 + (fbm(wob, u * 4, v * 4, 2) - 0.5) * 1.2)
-      const ripple = Math.sin(a * 160) * 0.35
+      const rings = Math.sin(r * 250 + (fbm(wob, u * 4, v * 4, 2) - 0.5) * 0.9)
+      const ripple = Math.sin(a * 150) * 0.45
       // engraving lives in the central medallion only
-      const mask = smoothstep(0.4, 0.3, r) * smoothstep(0.02, 0.06, r)
-      height[y * N + x] = (rings * 0.8 + ripple) * mask
+      const mask = smoothstep(0.45, 0.34, r) * smoothstep(0.025, 0.07, r)
+      height[y * N + x] = (rings * 0.85 + ripple) * mask
     }
   }
-  const tex = finish(normalFromHeight(height, N, N, 0.32), false)
+  const tex = finish(normalFromHeight(height, N, N, 0.6), false)
   tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping
   return tex
 }
@@ -541,30 +541,33 @@ export function createLeatherMaps(
   const height = new Float32Array(W * H)
   const rough = new Float32Array(W * H)
 
-  // Voronoi-ish grain cells
+  // Worley cells shaped like alligator scales — wider along the strap than across
   const rand = makeRandom(313)
-  const CELLS = 38
+  const CU = 20
+  const CV = 12
   const pts: [number, number][] = []
-  for (let i = 0; i < CELLS * CELLS; i++) {
-    pts.push([((i % CELLS) + rand()) / CELLS, (Math.floor(i / CELLS) + rand()) / CELLS])
+  for (let j = 0; j < CV; j++) {
+    for (let i = 0; i < CU; i++) {
+      pts.push([(i + 0.2 + rand() * 0.6) / CU, (j + 0.2 + rand() * 0.6) / CV])
+    }
   }
   const cellAt = (u: number, v: number) => {
-    const gx = Math.floor(u * CELLS)
-    const gy = Math.floor(v * CELLS)
+    const gx = Math.floor(u * CU)
+    const gy = Math.floor(v * CV)
     let d1 = 9
     let d2 = 9
     for (let j = -1; j <= 1; j++) {
       for (let i = -1; i <= 1; i++) {
-        const cx = (gx + i + CELLS) % CELLS
-        const cy = (gy + j + CELLS) % CELLS
-        const p = pts[cy * CELLS + cx]
+        const cx = (gx + i + CU) % CU
+        const cy = (gy + j + CV) % CV
+        const p = pts[cy * CU + cx]
         let dx = p[0] - u
         let dy = p[1] - v
         if (dx > 0.5) dx -= 1
         if (dx < -0.5) dx += 1
         if (dy > 0.5) dy -= 1
         if (dy < -0.5) dy += 1
-        const d = Math.hypot(dx, dy)
+        const d = Math.hypot(dx * 1.1, dy * 1.7)
         if (d < d1) {
           d2 = d1
           d1 = d
@@ -582,35 +585,36 @@ export function createLeatherMaps(
       const u = x / W
       const v = y / H
       const i = y * W + x
-      const crease = 1 - smoothstep(0.0, 0.035, cellAt(u, v))
+      const crease = 1 - smoothstep(0.0, 0.05, cellAt(u, v))
       const grain = fbm(fine, u * 260, v * 260, 3)
-      const shade = 1 - crease * 0.55 + (grain - 0.5) * 0.22
+      const shade = 1 - crease * 0.62 + (grain - 0.5) * 0.18
       const o = i * 4
       img.data[o] = clamp01(base.r * shade) ** (1 / 2.2) * 255
       img.data[o + 1] = clamp01(base.g * shade) ** (1 / 2.2) * 255
       img.data[o + 2] = clamp01(base.b * shade) ** (1 / 2.2) * 255
       img.data[o + 3] = 255
-      height[i] = -crease * 1.0 + (grain - 0.5) * 0.35
-      rough[i] = 0.52 + crease * 0.2 + (grain - 0.5) * 0.1
+      height[i] = -crease * 1.3 + (grain - 0.5) * 0.3
+      rough[i] = 0.5 + crease * 0.22 + (grain - 0.5) * 0.1
     }
   }
   ctx.putImageData(img, 0, 0)
 
-  // saddle stitching along both edges (v runs across the strap)
+  // Saddle stitching along both edges. Canvas rows run opposite to texture v,
+  // which is flipped on upload.
   ctx.lineCap = 'round'
   for (const row of stitchRows) {
-    const yy = row * H
+    const yy = (1 - row) * H
     for (let s = 0; s < 56; s++) {
       const cx = ((s + 0.5) / 56) * W
       ctx.save()
       ctx.translate(cx, yy)
-      ctx.rotate(-0.32)
+      ctx.rotate(-0.3)
       ctx.strokeStyle = stitch
-      ctx.lineWidth = H * 0.011
-      ctx.globalAlpha = 0.95
+      ctx.lineWidth = H * 0.016
+      ctx.globalAlpha = 1
       ctx.beginPath()
-      ctx.moveTo(-W * 0.0055, 0)
-      ctx.lineTo(W * 0.0055, 0)
+      ctx.moveTo(-W * 0.0062, 0)
+      ctx.lineTo(W * 0.0062, 0)
       ctx.stroke()
       ctx.restore()
       // matching relief in the height field

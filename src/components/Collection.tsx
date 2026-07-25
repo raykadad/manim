@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react'
-import { ProductScene } from '../three/ProductScene'
+import { Suspense, lazy, useMemo, useState } from 'react'
 import { MODELS, specFor, type WatchModel } from '../three/watchSpecs'
 import { useVisibility } from '../hooks/useVisibility'
 import { Arrow, Reveal } from './primitives'
 
+const ProductScene = lazy(() =>
+  import('../three/ProductScene').then((m) => ({ default: m.ProductScene })),
+)
+
 const GLOWS: Record<string, string> = {
-  solstice: '#1d2732',
-  meridian: '#2c2118',
+  solstice: '#2c3b4c',
+  meridian: '#453221',
 }
 
 function Piece({ model, flip }: { model: WatchModel; flip: boolean }) {
@@ -21,7 +24,11 @@ function Piece({ model, flip }: { model: WatchModel; flip: boolean }) {
         <span className="piece__index">{model.index}</span>
         <span className="piece__corner piece__corner--tl">{model.reference}</span>
         <span className="piece__corner piece__corner--br">{current.name}</span>
-        {mount && <ProductScene spec={spec} active={active} glow={GLOWS[model.id]} />}
+        {mount && (
+          <Suspense fallback={null}>
+            <ProductScene spec={spec} active={active} glow={GLOWS[model.id]} />
+          </Suspense>
+        )}
         <span className="piece__hint">Drag to turn</span>
       </div>
 

@@ -37,7 +37,10 @@ function CameraRig({ still }: { still: boolean }) {
     const azimuth = spin * Math.PI * 2 + drift.current.x * 0.14 + 0.55
     const elevation =
       0.44 + 0.26 * Math.sin(spin * Math.PI * 2 * 0.41) + drift.current.y * 0.06
-    const radius = 19.5 + 2.1 * Math.sin(spin * Math.PI * 2 * 0.27 + 1.1)
+    // pull back on portrait viewports so the piece never crops
+    const aspect = state.size.width / Math.max(1, state.size.height)
+    const fit = aspect < 1.35 ? Math.min(1.8, 1.35 / aspect) : 1
+    const radius = (19.5 + 2.1 * Math.sin(spin * Math.PI * 2 * 0.27 + 1.1)) * fit
 
     camera.position.set(
       Math.sin(azimuth) * Math.cos(elevation) * radius,
@@ -104,30 +107,38 @@ function HeroContents({ still }: { still: boolean }) {
   )
 }
 
-export function HeroScene({ onReady }: { onReady?: () => void }) {
+export function HeroScene({
+  onReady,
+  active = true,
+}: {
+  onReady?: () => void
+  active?: boolean
+}) {
   const reduced = usePrefersReducedMotion()
-  const [dpr, setDpr] = useState(1.5)
+  const [dpr, setDpr] = useState(1.25)
+  const lite = typeof window !== 'undefined' && window.innerWidth < 760
 
   return (
     <Canvas
       flat
       shadows
+      frameloop={active ? 'always' : 'demand'}
       dpr={dpr}
       gl={{ antialias: false, powerPreference: 'high-performance' }}
       camera={{ fov: 24, near: 0.5, far: 200, position: [8, 8, 14] }}
       onCreated={({ gl }) => {
-        gl.transmissionResolutionScale = 1
-        setDpr(Math.min(window.devicePixelRatio, 1.75))
+        gl.transmissionResolutionScale = lite ? 0.6 : 1
+        setDpr(Math.min(window.devicePixelRatio, lite ? 1.5 : 1.75))
         onReady?.()
       }}
     >
       <HeroContents still={reduced} />
-      <EffectComposer multisampling={4} enableNormalPass={false}>
+      <EffectComposer multisampling={lite ? 0 : 4} enableNormalPass={false}>
         <DepthOfField
           target={FOCUS}
-          worldFocusRange={5.5}
-          bokehScale={2.1}
-          height={720}
+          worldFocusRange={lite ? 12 : 5.5}
+          bokehScale={lite ? 1.1 : 2.1}
+          height={lite ? 480 : 720}
         />
         <Bloom
           intensity={0.34}

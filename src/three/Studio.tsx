@@ -11,7 +11,7 @@ import { createGlowTexture } from './textures'
 export function StudioEnvironment({ intensity = 1 }: { intensity?: number }) {
   return (
     <Environment resolution={512} frames={1}>
-      <color attach="background" args={['#242a32']} />
+      <color attach="background" args={['#2b323b']} />
 
       {/* broad, dim front fill so satin surfaces never go to black */}
       <Lightformer

@@ -6,7 +6,8 @@ import {
   insetPolygon,
   mergeAll,
   roundedRect,
-  stitchRowsFor,
+  strapSection,
+  strapStitchRows,
   sweepGeometry,
   transformed,
   V2,
@@ -19,6 +20,14 @@ import {
   getLinkBrushed,
   getSunrayAnisotropy,
 } from './assets'
+import {
+  bezelProfile,
+  caseHeightFor,
+  caseProfile,
+  crystalProfile,
+  DIAL_RADIUS,
+  DIAL_Y,
+} from './caseProfile'
 import { METALS, type WatchSpec } from './watchSpecs'
 
 /** Dial-plane direction: 0 turns = 12 o'clock, increasing clockwise. */
@@ -55,7 +64,7 @@ type Ctx = {
  */
 export function buildWatch(spec: WatchSpec) {
   const R = spec.diameter / 20
-  const H = R * 0.538
+  const H = caseHeightFor(R)
   const group = new THREE.Group()
   const disposables: { dispose(): void }[] = []
 
@@ -94,7 +103,7 @@ export function buildWatch(spec: WatchSpec) {
     new THREE.MeshPhysicalMaterial({
       color: metal.color,
       metalness: 1,
-      roughness: 0.075,
+      roughness: 0.1,
       envMapIntensity: 1.15,
     }),
   )
@@ -104,8 +113,8 @@ export function buildWatch(spec: WatchSpec) {
     new THREE.MeshPhysicalMaterial({
       color: handColor,
       metalness: 1,
-      roughness: spec.handMetal === 'blued' ? 0.1 : 0.05,
-      envMapIntensity: 1.4,
+      roughness: spec.handMetal === 'blued' ? 0.15 : 0.07,
+      envMapIntensity: 1.35,
     }),
   )
 
@@ -120,17 +129,19 @@ export function buildWatch(spec: WatchSpec) {
     }),
   )
 
-  const lumeMat = track(
-    new THREE.MeshPhysicalMaterial({
-      color: spec.lume,
-      metalness: 0,
-      roughness: 0.6,
-      emissive: new THREE.Color(spec.lume),
-      emissiveIntensity: 0.06,
-      clearcoat: 0.55,
-      clearcoatRoughness: 0.3,
-    }),
-  )
+  const lumeMat = spec.lume
+    ? track(
+        new THREE.MeshPhysicalMaterial({
+          color: spec.lume,
+          metalness: 0,
+          roughness: 0.6,
+          emissive: new THREE.Color(spec.lume),
+          emissiveIntensity: 0.06,
+          clearcoat: 0.55,
+          clearcoatRoughness: 0.3,
+        }),
+      )
+    : null
 
   const crystalMat = track(
     new THREE.MeshPhysicalMaterial({
@@ -142,8 +153,10 @@ export function buildWatch(spec: WatchSpec) {
       ior: 1.76,
       attenuationColor: new THREE.Color('#d9ecf5'),
       attenuationDistance: 6,
-      specularIntensity: 1,
-      envMapIntensity: 1.5,
+      // anti-reflective coating on both faces: very little bounces back
+      specularIntensity: 0.42,
+      specularColor: new THREE.Color('#cfe4ff'),
+      envMapIntensity: 0.85,
       transparent: true,
     }),
   )
@@ -156,8 +169,8 @@ export function buildWatch(spec: WatchSpec) {
       roughnessMap: dialMaps.roughnessMap,
       metalness: 1,
       roughness: 1,
-      clearcoat: spec.dial.finish === 'lacquer' ? 1 : 0.4,
-      clearcoatRoughness: spec.dial.finish === 'lacquer' ? 0.02 : 0.14,
+      clearcoat: spec.dial.finish === 'lacquer' ? 1 : 0.3,
+      clearcoatRoughness: spec.dial.finish === 'lacquer' ? 0.03 : 0.3,
       envMapIntensity: 1.05,
     }),
   )
@@ -167,80 +180,19 @@ export function buildWatch(spec: WatchSpec) {
   }
   if (spec.dial.finish === 'guilloche') {
     dialMat.normalMap = getGuilloche()
-    dialMat.normalScale = new THREE.Vector2(1.2, 1.2)
+    dialMat.normalScale = new THREE.Vector2(1.7, 1.7)
   }
 
   const ctx: Ctx = { R, H, spec, track, add, polished, caseMat }
 
   /* ---------------- case & bezel ---------------- */
 
-  const casePts = fillet(
-    [
-      V2(0, 0.115 * H),
-      V2(0.44 * R, 0.1 * H),
-      V2(0.84 * R, 0.008 * H),
-      V2(0.935 * R, 0.075 * H),
-      V2(0.995 * R, 0.26 * H),
-      V2(1.0 * R, 0.45 * H),
-      V2(0.972 * R, 0.6 * H),
-      V2(0.988 * R, 0.648 * H),
-      V2(0.79 * R, 0.648 * H),
-      V2(0.775 * R, 0.45 * H),
-      V2(0.75 * R, 0.42 * H),
-      V2(0, 0.42 * H),
-    ],
-    [
-      0,
-      0.34 * R,
-      0.05 * R,
-      0.035 * R,
-      0.09 * R,
-      0.14 * R,
-      0.02 * R,
-      0.012 * R,
-      0.02 * R,
-      0.03 * R,
-      0.03 * R,
-      0,
-    ],
-    6,
-  )
-  add(new THREE.LatheGeometry(casePts, 168), caseMat)
-
-  const bezelPts = fillet(
-    [
-      V2(0.9 * R, 0.638 * H),
-      V2(0.985 * R, 0.648 * H),
-      V2(1.003 * R, 0.7 * H),
-      V2(0.995 * R, 0.778 * H),
-      V2(0.962 * R, 0.834 * H),
-      V2(0.862 * R, 0.874 * H),
-      V2(0.8 * R, 0.864 * H),
-      V2(0.792 * R, 0.66 * H),
-      V2(0.9 * R, 0.638 * H),
-    ],
-    [0, 0.02 * R, 0.024 * R, 0.02 * R, 0.022 * R, 0.018 * R, 0.012 * R, 0.02 * R, 0],
-    6,
-  )
-  add(new THREE.LatheGeometry(bezelPts, 168), polished)
+  add(new THREE.LatheGeometry(caseProfile(R, H), 168), caseMat)
+  add(new THREE.LatheGeometry(bezelProfile(R, H), 168), polished)
 
   /* ---------------- sapphire ---------------- */
 
-  const crystalPts = fillet(
-    [
-      V2(0, 0.655 * H),
-      V2(0.755 * R, 0.655 * H),
-      V2(0.788 * R, 0.7 * H),
-      V2(0.788 * R, 0.812 * H),
-      V2(0.764 * R, 0.858 * H),
-      V2(0.58 * R, 0.912 * H),
-      V2(0.32 * R, 0.936 * H),
-      V2(0, 0.941 * H),
-    ],
-    [0, 0.018 * R, 0.012 * R, 0.03 * R, 0.07 * R, 0.36 * R, 0.62 * R, 0],
-    7,
-  )
-  add(new THREE.LatheGeometry(crystalPts, 168), crystalMat, (m) => {
+  add(new THREE.LatheGeometry(crystalProfile(R, H), 168), crystalMat, (m) => {
     m.castShadow = false
     m.receiveShadow = false
     m.renderOrder = 2
@@ -248,8 +200,8 @@ export function buildWatch(spec: WatchSpec) {
 
   /* ---------------- dial ---------------- */
 
-  const dialY = 0.44 * H
-  const dialGeo = new THREE.CircleGeometry(0.762 * R, 168)
+  const dialY = DIAL_Y(H)
+  const dialGeo = new THREE.CircleGeometry(DIAL_RADIUS(R), 168)
   dialGeo.rotateX(-Math.PI / 2)
   dialGeo.translate(0, dialY, 0)
   add(dialGeo, dialMat, (m) => {
@@ -262,15 +214,15 @@ export function buildWatch(spec: WatchSpec) {
   const idxLen = 0.3 * R
   const idxHalfW = 0.038 * R
   const idxH = 0.05 * R
-  const idxChamfer = idxHalfW * 0.6
+  const idxChamfer = idxHalfW * 0.36
 
   const indexPoly = roundedRect(idxLen / 2, idxHalfW, idxHalfW * 0.4, 3)
   const baseIndex = chamferedPrism(indexPoly, {
     height: idxH,
     chamferTop: idxChamfer,
-    chamferRise: idxH * 0.62,
+    chamferRise: idxH * 0.5,
   })
-  const baseLume = chamferedPrism(insetPolygon(indexPoly, idxChamfer * 1.15), {
+  const baseLume = chamferedPrism(insetPolygon(indexPoly, idxChamfer * 1.2), {
     height: idxH * 0.05,
   })
 
@@ -290,9 +242,14 @@ export function buildWatch(spec: WatchSpec) {
     m.multiply(lay)
     if (scale !== 1) m.multiply(new THREE.Matrix4().makeScale(scale, 1, 1))
     indexGeos.push(transformed(baseIndex, m))
-    lumeGeos.push(
-      transformed(baseLume, m.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, idxH * 0.98))),
-    )
+    if (lumeMat) {
+      lumeGeos.push(
+        transformed(
+          baseLume,
+          m.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, idxH * 0.98)),
+        ),
+      )
+    }
   }
 
   for (let h = 1; h < 12; h++) placeIndex(h / 12, 0)
@@ -301,7 +258,17 @@ export function buildWatch(spec: WatchSpec) {
   baseIndex.dispose()
   baseLume.dispose()
 
-  add(mergeAll(indexGeos), polished)
+  // Applied indices are mirror-polished but tiny, so a touch of roughness keeps
+  // them reading as gold rather than as black cut-outs on a pale dial.
+  const indexMat = track(
+    new THREE.MeshPhysicalMaterial({
+      color: metal.color,
+      metalness: 1,
+      roughness: 0.16,
+      envMapIntensity: 1.35,
+    }),
+  )
+  add(mergeAll(indexGeos), indexMat)
 
   /* ---------------- hands ---------------- */
 
@@ -343,7 +310,7 @@ export function buildWatch(spec: WatchSpec) {
 
   /** Luminous inlay sunk into the top facet — what makes a hand readable. */
   const handLume = (length: number, halfW: number) => {
-    const w = halfW * 0.44
+    const w = halfW * 0.36
     const pts =
       spec.hands === 'dauphine'
         ? [
@@ -381,8 +348,8 @@ export function buildWatch(spec: WatchSpec) {
   const secondTurns = SECOND / 60
 
   const hands: [number, number, number, number][] = [
-    [0.44 * R, 0.052 * R, 0.1 * R, dialY + 0.02 * R],
-    [0.655 * R, 0.042 * R, 0.11 * R, dialY + 0.048 * R],
+    [0.465 * R, 0.053 * R, 0.1 * R, dialY + 0.02 * R],
+    [0.7 * R, 0.042 * R, 0.11 * R, dialY + 0.048 * R],
   ]
   const handTurns = [hourTurns, minuteTurns]
   const lumeParts: THREE.BufferGeometry[] = []
@@ -391,11 +358,11 @@ export function buildWatch(spec: WatchSpec) {
     const body = handGeo(length, halfW, tail, thickness)
     add(transformed(body, orient(handTurns[i], y)), handMat)
     body.dispose()
-    const inlay = handLume(length, halfW)
-    lumeParts.push(
-      transformed(inlay, orient(handTurns[i], y + thickness * 0.96)),
-    )
-    inlay.dispose()
+    if (lumeMat) {
+      const inlay = handLume(length, halfW)
+      lumeParts.push(transformed(inlay, orient(handTurns[i], y + thickness * 0.96)))
+      inlay.dispose()
+    }
   })
 
   const secDir = dirAt(secondTurns)
@@ -428,9 +395,11 @@ export function buildWatch(spec: WatchSpec) {
   hub.translate(0, dialY + 0.078 * R, 0)
   add(hub, polished)
 
-  add(mergeAll([...lumeGeos, ...lumeParts]), lumeMat, (m) => {
-    m.castShadow = false
-  })
+  if (lumeMat && lumeGeos.length + lumeParts.length > 0) {
+    add(mergeAll([...lumeGeos, ...lumeParts]), lumeMat, (m) => {
+      m.castShadow = false
+    })
+  }
 
   /* ---------------- crown ---------------- */
 
@@ -572,13 +541,6 @@ function buildBracelet({ R, H, add, track, polished }: Ctx, metalId: keyof typeo
   add(bothSides(centres), polished)
   add(bothSides(outers), linkMat)
 }
-
-/** Cross-section of a strap for a case of radius `R`. */
-export const strapSection = (R: number) =>
-  roundedRect(0.5 * R, 0.082 * R, 0.082 * R * 0.85, 3)
-
-/** Where the saddle stitching lands in strap UV space (scale independent). */
-export const strapStitchRows = () => stitchRowsFor(strapSection(1), 0.5 * 0.15)
 
 function buildLugsAndStrap({ R, H, add, track, caseMat }: Ctx, color: string, stitch: string) {
   const strapHalf = 0.5 * R

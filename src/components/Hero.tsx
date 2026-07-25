@@ -1,4 +1,5 @@
 import { Suspense, lazy } from 'react'
+import { useVisibility } from '../hooks/useVisibility'
 import { Arrow } from './primitives'
 
 const HeroScene = lazy(() =>
@@ -6,11 +7,13 @@ const HeroScene = lazy(() =>
 )
 
 export function Hero({ onReady }: { onReady: () => void }) {
+  const { ref, active } = useVisibility<HTMLDivElement>()
+
   return (
     <section className="hero" id="top">
-      <div className="hero__stage">
+      <div className="hero__stage" ref={ref}>
         <Suspense fallback={null}>
-          <HeroScene onReady={onReady} />
+          <HeroScene onReady={onReady} active={active} />
         </Suspense>
       </div>
       <div className="hero__scrim" />

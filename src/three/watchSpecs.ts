@@ -20,7 +20,8 @@ export type WatchSpec = {
   handMetal: MetalId | 'blued'
   secondsAccent: string
   band: BandSpec
-  lume: string
+  /** null on dress pieces, which carry no luminous material at all */
+  lume: string | null
 }
 
 export type Colourway = {
@@ -45,7 +46,7 @@ export type WatchModel = {
   metal: MetalId
   hands: 'dauphine' | 'baton'
   handMetal: MetalId | 'blued'
-  lume: string
+  lume: string | null
   band: BandSpec
   dialBase: Pick<DialSpec, 'brand' | 'line1' | 'line2' | 'date' | 'dateAngle'>
   colourways: Colourway[]
@@ -129,7 +130,7 @@ export const MODELS: WatchModel[] = [
     metal: 'rosegold',
     hands: 'baton',
     handMetal: 'blued',
-    lume: '#efe3c8',
+    lume: null,
     band: { kind: 'leather', color: '#5a3220', stitch: '#c9a575' },
     dialBase: {
       brand: 'SLAPPIS',
@@ -172,7 +173,7 @@ export const MODELS: WatchModel[] = [
     ],
     notes: [
       'Rose-engine guilloché centre medallion',
-      'Flame-blued baton hands',
+      'Flame-blued baton hands, no luminous material',
       'Hand-bevelled bridges, black-polished caps',
     ],
   },
