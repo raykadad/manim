@@ -632,6 +632,51 @@ function roofProps(pool, era, spec, tags, w, d, h, rng, out) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Parking deck frontage                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * One open-deck level of a parking structure. The opening is recessed into the
+ * mass so the piers, spandrel and the cars behind them catch light — a single
+ * dark slot in front of the wall just reads as a hole in the block.
+ */
+function parkingDeck(g, pool, spec, rng, w, fh, y) {
+  const win = spec.windows;
+  const structure = flat(pool, spec.cornice?.color || '#b0ada2', { roughness: 0.9 });
+  const openH = fh * 0.52;
+  const sill = y - openH / 2;
+
+  // recessed void, front face flush with the facade
+  g.add(box(flat(pool, win.glass || '#181c20', { roughness: 1 }), w - 1.2, openH, 0.7, 0, y, -0.35));
+
+  // spandrel upstand you actually lean on, with a rail above it
+  g.add(box(structure, w - 1.2, openH * 0.42, 0.34, 0, sill + openH * 0.21, 0.02));
+  g.add(box(flat(pool, '#8d8b84', { metalness: 0.5, roughness: 0.45 }), w - 1.2, 0.08, 0.1, 0, sill + openH * 0.5, 0.12));
+
+  // piers between bays — these are what break the black band up
+  const bays = Math.max(2, Math.round(w / 5));
+  for (let i = 0; i <= bays; i++) {
+    const px = -w / 2 + 0.6 + (i / bays) * (w - 1.2);
+    g.add(box(structure, i === 0 || i === bays ? 0.7 : 0.42, openH, 0.3, px, y, 0.04));
+  }
+
+  // parked cars behind the openings, just roofs and a hint of body
+  const carMat = ['#6b6f74', '#8a8478', '#5a6470', '#7d5f52', '#9aa0a4'];
+  for (let i = 0; i < bays; i++) {
+    if (!rng.chance(0.7)) continue;
+    const cx = -w / 2 + 0.6 + ((i + 0.5) / bays) * (w - 1.2);
+    const paint = flat(pool, rng.pick(carMat), { roughness: 0.6, metalness: 0.2 });
+    g.add(box(paint, 1.9, 0.5, 1.3, cx, sill + openH * 0.42, -0.62));
+    g.add(box(paint, 1.35, 0.38, 1.1, cx, sill + openH * 0.72, -0.62));
+  }
+
+  // ceiling strip light, brightest on the levels that are switched on
+  if (rng.chance(win.litChance ?? 0.3)) {
+    g.add(box(emissiveMat(pool, '#e8eec8', 1.1), w * 0.5, 0.07, 0.09, rng.range(-w / 5, w / 5), y + openH * 0.42, -0.2));
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main builder                                                       */
 /* ------------------------------------------------------------------ */
 
@@ -724,17 +769,7 @@ export function buildBuilding(era, lot, spec, pool, { neighborL = 0, neighborR =
       for (let c = 0; c < cols; c++) {
         const x = -w / 2 + (w / cols) * (c + 0.5);
         if (win.style === 'openramp') {
-          // parking deck: a long slot rather than punched windows
-          if (c === 0) {
-            const slot = box(flat(pool, '#14171a'), w - 1.6, fh * 0.5, 0.4, 0, y, 0.02);
-            g.add(slot);
-            const railing = box(flat(pool, '#8d8b84', { metalness: 0.4 }), w - 1.6, 0.1, 0.14, 0, y - fh * 0.24, 0.16);
-            g.add(railing);
-            if (rng.chance(win.litChance)) {
-              const lamp = box(emissiveMat(pool, '#e8eec8', 1.6), 0.5, 0.08, 0.1, rng.range(-w / 3, w / 3), y + fh * 0.2, 0.1);
-              g.add(lamp);
-            }
-          }
+          if (c === 0) parkingDeck(g, pool, spec, rng, w, fh, y);
           continue;
         }
         const { group: wg, lit } = buildWindow(pool, era, spec, ww, wh, rng, f);
